@@ -1,0 +1,833 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>NBA Prop Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a night-slate sportsbook look — deep purple field, glowing cards, team-color badges; browse games, tap a game, tap a player */
+:root{
+  --bg:#120D22; --panel:#211A3A; --panel2:#2B2249; --ink:#F4F1FF; --muted:#A99FC9; --line:#372C5C; --soft:#2A2148;
+  --accent:#7CF05A; --accent-ink:#0F1A08; --accent-soft:#2C2350; --violet:#9B6BFF;
+  --good:#7CF05A; --good-bg:#1F3A1C; --warn:#FFC24B; --warn-bg:#3A2D12; --bad:#FF5A6A;
+  --display:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+body{background-color:var(--bg);background-image:radial-gradient(900px 520px at 0% -8%,#40217E 0%,rgba(64,33,126,0) 62%),radial-gradient(800px 480px at 105% 4%,#2A1460 0%,rgba(42,20,96,0) 58%);background-attachment:fixed;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 16px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+h1{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;margin:0;text-transform:uppercase;letter-spacing:.01em}
+h1 span{color:var(--accent)}
+h2{font-family:var(--display);font-weight:600;font-size:22px;text-transform:uppercase;letter-spacing:.03em;margin:0}
+.asof{color:var(--muted);font-size:13px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+nav{display:flex;gap:2px;margin:14px 0 16px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{font:600 15px var(--body);background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 12px;cursor:pointer;margin-bottom:-1px;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:12px;line-height:18px;text-align:center;margin-left:4px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:600 14px var(--body);border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{font-size:13px;padding:5px 9px}
+.btn.ghost{background:none}
+input,select{font:500 16px var(--body);color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:7px 9px;width:100%;min-width:0;box-sizing:border-box}
+label{display:grid;gap:3px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+
+/* dates + games */
+.dates{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+.dates button{flex:0 0 auto;font:600 14px var(--body);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer;text-align:center;line-height:1.2}
+.dates button small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.dates button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dates button[aria-pressed="true"] small{color:var(--bg);opacity:.75}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:18px}
+.game{font:inherit;color:inherit;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 12px;cursor:pointer;display:grid;gap:2px}
+.game .m{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:.02em}
+.game .m i{font-style:normal;color:var(--muted);font-weight:600;padding:0 4px}
+.game .s{font-size:12px;color:var(--muted)}
+.game[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.game .pc{color:var(--accent);font-weight:600}
+
+/* game detail */
+.gd{display:grid;gap:14px}
+.gdhead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.gdhead .t{font-family:var(--display);font-size:30px;font-weight:700;line-height:1.05;text-transform:uppercase}
+.gdhead .t i{font-style:normal;color:var(--muted);font-size:22px;padding:0 6px}
+.gl{display:flex;gap:10px;flex-wrap:wrap}
+.gl label{width:110px}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:900px){.teams{grid-template-columns:1fr}}
+.team{background:var(--panel);border:1px solid var(--line);border-radius:16px;min-width:0}
+.team h3{margin:0;padding:10px 14px;font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.team h3 small{font-family:var(--body);font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--soft)}
+th:first-child,td:first-child{text-align:left;padding-left:14px}
+td.key{font-weight:600;color:var(--ink)}
+th.key{color:var(--ink)}
+tr.pl{cursor:pointer}
+tr.pl:hover td{background:var(--soft)}
+tr.pl.open td{background:var(--accent-soft)}
+.pn{font-weight:600}
+.pn small{font-weight:500;color:var(--muted);margin-left:4px}
+.st{display:inline-block;font-size:10px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:0 3px;margin-left:5px;vertical-align:1px}
+.stale{color:var(--muted)}
+tr.slip td{background:var(--soft);white-space:normal;text-align:left;padding:12px 14px}
+tr.slip td>*{max-width:min(calc(100vw - 44px),540px)}
+.ladder .tw{max-width:min(calc(100vw - 44px),540px)}
+.slipgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;align-items:end}
+.live{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px}
+.live .big{font-family:var(--display);font-size:22px;font-weight:700}
+.prev{font-size:12px;color:var(--muted);margin-top:8px}
+.addother{padding:10px 14px;display:flex;gap:8px}
+.addother input{font-size:14px}
+
+/* board */
+.list{display:grid;gap:10px}
+.tick{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
+.who{min-width:0}
+.who .name{font-weight:600;font-size:16px}
+.who .meta{font-size:13px;color:var(--muted)}
+.prop{font-family:var(--display);font-size:24px;font-weight:600;line-height:1.1}
+.verdict{text-align:right;display:grid;gap:4px;justify-items:end}
+.chip{display:inline-block;font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:3px}
+.chip.strong{background:var(--good-bg);color:var(--good)}
+.chip.lean{background:var(--warn-bg);color:var(--warn)}
+.chip.pass{background:var(--soft);color:var(--muted)}
+.chip.check{background:var(--warn-bg);color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
+.ev{font-size:13px;color:var(--muted)}
+.ev b{color:var(--ink)}
+.bar{grid-column:1/-1;position:relative;height:28px}
+.bar .track{position:absolute;left:0;right:0;top:13px;height:2px;background:var(--line)}
+.bar .mk{position:absolute;transform:translateX(-50%);font-size:11px;white-space:nowrap;text-align:center}
+.bar .line{top:0;color:var(--ink)} .bar .line i{display:block;width:2px;height:10px;margin:2px auto 0;background:var(--ink)}
+.bar .proj{top:9px;color:var(--accent)} .bar .proj i{display:block;width:10px;height:10px;border-radius:50%;margin:0 auto 1px;background:var(--accent)}
+.acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;border-top:1px solid var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
+.acts .grow{flex:1;min-width:140px}
+.empty{background:var(--panel);border:1px dashed var(--line);border-radius:16px;padding:16px;color:var(--muted)}
+.empty b{color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.stat .k{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.stat .v{font-family:var(--display);font-size:30px;font-weight:700}
+.logtw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.logtw table{min-width:760px}
+.logtw.brk table{min-width:460px}
+.repl{grid-column:1/-1}
+.why{font-size:12px;color:var(--warn);margin-top:3px;max-width:240px;white-space:normal}
+.calib{display:grid;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.calib p{margin:0;max-width:68ch}
+.calib .stat{background:var(--soft)}
+.warnline{color:var(--warn)}
+.logtw td,.logtw th{text-align:left}
+.logtw td input{width:76px;padding:5px 7px;font-size:14px}
+.res-win{color:var(--good);font-weight:600}.res-loss{color:var(--bad);font-weight:600}.res-push{color:var(--muted);font-weight:600}
+.sec{display:grid;gap:12px;min-width:0}
+.note{font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.prose{max-width:68ch;display:grid;gap:10px}
+.prose h3{font-family:var(--display);font-size:20px;text-transform:uppercase;letter-spacing:.03em;margin:8px 0 0}
+.prose p,.prose li{margin:0}
+.prose ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;z-index:20}
+.err{color:var(--bad);font-size:13px}
+
+/* night-slate look */
+header{border-bottom:1px solid var(--line)}
+h1{font-weight:800;letter-spacing:.01em}
+h1 span{color:var(--accent);text-shadow:0 0 18px rgba(124,240,90,.35)}
+.num{font-variant-numeric:tabular-nums}
+.tb{--c1:#444;--c2:#999;display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;background-color:var(--c1);background-image:linear-gradient(150deg,rgba(255,255,255,.18),rgba(0,0,0,.35));box-shadow:0 0 0 2px var(--c2),0 6px 14px rgba(0,0,0,.4);color:#fff;font:800 12px var(--body);letter-spacing:.03em;flex:0 0 auto}
+.tb.lg{width:60px;height:60px;font-size:17px;box-shadow:0 0 0 3px var(--c2),0 8px 20px rgba(0,0,0,.45)}
+.tb.light{color:#14102A}
+.av{--c1:#444;--c2:#999;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background-color:var(--c1);background-image:radial-gradient(circle at 35% 30%,rgba(255,255,255,.28),rgba(255,255,255,0) 55%),linear-gradient(160deg,rgba(0,0,0,0),rgba(0,0,0,.4));box-shadow:0 0 0 2px var(--c2);color:#fff;font:700 13px var(--body);flex:0 0 auto}
+.av.lg{width:64px;height:64px;font-size:22px;box-shadow:0 0 0 3px var(--c2),0 10px 24px rgba(0,0,0,.45)}
+.av.light{color:#14102A}
+.games{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.game{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:14px;gap:10px;box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.game .row{display:flex;align-items:center;gap:10px;font-size:17px}
+.game .row b{font-weight:700}
+.game .row small{color:var(--muted);font-size:12px;margin-left:auto}
+.game[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 24px rgba(124,240,90,.18)}
+.gdhead{background:linear-gradient(160deg,var(--panel2),var(--panel));border-radius:20px;padding:16px;flex-direction:column;align-items:stretch}
+.mu{display:grid;grid-template-columns:auto 1fr auto 1fr auto;align-items:center;gap:10px}
+.mu b{font-size:20px;font-weight:700;min-width:0}
+.mu b.r{text-align:right}
+.mu .when{color:var(--muted);font-size:13px;text-align:center;white-space:nowrap}
+@media (max-width:520px){.mu{grid-template-columns:auto 1fr 1fr auto}.mu b{font-size:17px}.mu .when{grid-column:1/-1;grid-row:2;text-align:center}.mu .tb.lg{width:48px;height:48px;font-size:14px}}
+.gl{justify-content:flex-start}
+.team{border-radius:18px;overflow:hidden;background:var(--panel)}
+.team h3{display:flex;align-items:center;gap:10px;justify-content:flex-start}
+.team h3 small{margin-left:auto}
+.nc{display:flex;align-items:center;gap:10px}
+.nc>div{min-width:0}
+th{background:rgba(255,255,255,.03)}
+tr.pl:hover td{background:rgba(155,107,255,.08)}
+tr.pl.open td{background:var(--accent-soft)}
+tr.slip td{background:#1A1430}
+.ph{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.ph .phn{font-size:22px;font-weight:800;line-height:1.1}
+.btn{border-radius:12px}
+.btn.primary{box-shadow:0 0 18px rgba(124,240,90,.25)}
+input,select{border-radius:10px;background:#1A1430}
+.dates button{border-radius:12px;background:var(--panel)}
+.dates button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.dates button[aria-pressed="true"] small{color:var(--accent-ink)}
+nav button[aria-selected="true"]{border-color:var(--accent)}
+.tick,.stat,.empty,.note,.inj,.logtw,.ladder table{border-radius:16px}
+.ladder table{overflow:hidden}
+.st{color:var(--accent);border-color:var(--accent)}
+.backup{display:grid;gap:8px}
+.backup .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+label.btn{display:inline-block;text-transform:none;letter-spacing:0;font:600 14px var(--body);color:var(--ink)}
+/* injuries */
+.inj{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:13px}
+@media (max-width:700px){.inj{grid-template-columns:1fr}}
+.inj h4{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.inj ul{margin:0;padding:0;list-style:none;display:grid;gap:3px}
+.inj .none{color:var(--muted)}
+.ib{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:2px;padding:1px 4px;margin-right:5px;vertical-align:1px;text-transform:uppercase}
+.ib.out{background:var(--bad);color:var(--panel)}
+.ib.q{background:var(--warn-bg);color:var(--warn)}
+.ib.p{background:var(--good-bg);color:var(--good)}
+.ib.new{background:var(--violet);color:#fff}
+.alerts{display:grid;gap:8px;margin-bottom:14px}
+.al{border-radius:14px;padding:10px 12px;font-size:14px;border:1px solid var(--line);background:var(--panel)}
+.al.bad{border-color:var(--bad);box-shadow:inset 3px 0 0 var(--bad)}
+.al.warn{border-color:var(--warn);box-shadow:inset 3px 0 0 var(--warn)}
+.al.good{border-color:var(--good);box-shadow:inset 3px 0 0 var(--good)}
+.al.info{box-shadow:inset 3px 0 0 var(--violet)}
+.al .btn{margin-left:6px}
+.inj .note2{grid-column:1/-1;color:var(--muted);font-size:12px}
+tr.pl.isout td{opacity:.55}
+/* ladder */
+.ladder{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.ladder h5{margin:0 0 2px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.ladder p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+.ladder table{font-size:13px;background:var(--panel);border:1px solid var(--line)}
+.ladder th,.ladder td{text-align:right;padding:5px 8px}
+.ladder th:first-child,.ladder td:first-child{text-align:left;padding-left:10px}
+.ladder td input{width:78px;padding:4px 6px;font-size:14px}
+.ladder tr.near td{background:var(--accent-soft)}
+.ladder .tgt{font-weight:600;color:var(--good)}
+@media (max-width:600px){.ladder .fp{display:none}.ladder th,.ladder td{padding:5px 5px}.ladder th:first-child,.ladder td:first-child{padding-left:8px}.ladder td input{width:64px}.ladder .chip{padding:2px 5px;font-size:11px}.ladder .evn{display:block;font-size:11px}.ladder td .btn.sm{padding:3px 7px;font-size:12px;margin-top:3px}.ladder .tw{padding-left:0}.ladder .pj{display:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>NBA Prop <span>Desk</span></h1>
+  <div class="asof">Stats through <b>Nov 5, 2026</b> · injuries <b id="injasof">as of Nov 6</b> · this season only</div>
+</header>
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-v="games">Games</button>
+  <button role="tab" aria-selected="false" data-v="board">My props <span class="badge" id="nprops" hidden>0</span></button>
+  <button role="tab" aria-selected="false" data-v="log">Paper trades</button>
+  <button role="tab" aria-selected="false" data-v="how">How it works</button>
+</nav>
+
+<main id="v-games">
+  <div class="alerts-slot"></div>
+  <div class="dates" id="dates" role="group" aria-label="Game dates"></div>
+  <div class="games" id="games"></div>
+  <div id="gd"><div class="empty"><b>Loading tonight's games…</b> If this message doesn't go away, you're looking at a preview that can't run the page. Open the link in Safari or Chrome instead.</div></div>
+</main>
+
+<main id="v-board" class="sec" hidden>
+  <div class="sechead" style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+    <h2>Ranked by edge</h2>
+    <button class="btn sm ghost" id="clear-board" type="button" hidden>Clear props</button>
+  </div>
+  <div id="confirm-clear" class="note" hidden>Remove every prop from this list? Logged paper trades stay. <button class="btn sm" id="clear-yes" type="button">Yes, clear</button> <button class="btn sm ghost" id="clear-no" type="button">Keep</button></div>
+  <div class="alerts-slot"></div>
+  <div class="list" id="board"></div>
+</main>
+
+<main id="v-log" class="sec" hidden>
+  <div class="stats" id="sumtiles"></div>
+  <div id="calib"></div>
+  <div class="note">Each logged pick counts as 1 unit at the odds you entered. After the game, type the player's actual number and the pick grades itself. Add the minutes he played too, so losses show whether it was minutes or a cold night.</div>
+  <div class="logtw"><table>
+    <thead><tr><th>Date</th><th>Pick</th><th>Odds</th><th>Proj</th><th>Chance</th><th>Rating</th><th>Actual</th><th>Min</th><th>Result</th><th></th></tr></thead>
+    <tbody id="logrows"></tbody>
+  </table></div>
+  <div class="stats" id="tiertiles"></div>
+  <section class="note backup" aria-label="Backup">
+    <div><b>Backup</b> · <span id="bk-count"></span></div>
+    <div class="row"><button class="btn" type="button" id="bk-dl">Download backup</button>
+      <label class="btn" for="bk-file">Restore backup</label><input class="vh" type="file" id="bk-file" accept=".json,application/json"></div>
+    <div id="bk-confirm" hidden></div>
+    <div>The backup is a small file with your props, paper trades and marked-out players. Restoring adds anything missing and keeps what's already here.</div>
+  </section>
+</main>
+
+<main id="v-how" class="prose" hidden>
+  <h3>Your nightly routine</h3>
+  <ul>
+    <li>Tonight's games are already loaded. Tap a game to see both teams sorted by minutes, with shot attempts next to them.</li>
+    <li>If you have the game total and spread from the book, type them at the top of the game. Every projection in that game uses them.</li>
+    <li>Tap a player, pick the stat, and type the line and both odds from BetMGM or William Hill. The projection and edge show up as you type. Tap <b>Add prop</b> to keep it.</li>
+    <li>On <b>My props</b>, everything you added is ranked by edge. Tap <b>Log paper trade</b> on picks you'd bet, then enter the real number after the game.</li>
+  </ul>
+  <h3>Ladders and target prices</h3>
+  <ul>
+    <li>When you tap a player, a ladder shows his chance of reaching each number. "19+" means 19 or more.</li>
+    <li><b>Fair price</b> is what the odds would be with no house edge. <b>Strong at</b> is the worst price you should accept for a Strong bet. If the book offers that price or better (for example -150 when Strong at says -200), it's a Strong bet.</li>
+    <li>Type the book's price next to any rung to see the verdict, then tap <b>Add</b> to save it to My props.</li>
+    <li>For a regular over/under, use the Line, Over and Under boxes at the top instead. Leave Under blank for over-only bets.</li>
+  </ul>
+  <h3>Injuries</h3>
+  <ul>
+    <li>Each game lists who's out or questionable. Out players are greyed and moved to the bottom of the roster.</li>
+    <li>If a player isn't on the book's prop board, he's probably not playing. Tap him and hit <b>Mark out</b>. One teammate steps into his spot and gets up to 12 of his minutes; the desk picks the bench player at the same position, and you can change it under <b>Who takes his spot?</b> The rest of his minutes are spread thin across the team. Players getting extra minutes show a green <b>+min</b> tag. Tap <b>Undo out</b> to reverse it.</li>
+    <li>For a bigger role change than that, type the minutes into the player's Minutes box.</li>
+    <li>On the live version, the injury list updates on its own every 2 minutes while the page is open, and again whenever you come back to it.</li>
+    <li>When a player is newly ruled <b>Out</b>, the desk treats him like you marked him out: his replacement and teammates get his minutes, and their projections update automatically. He gets a purple <b>New</b> tag.</li>
+    <li>Alerts at the top tell you when a player on one of your saved props is ruled out or questionable, or when a teammate's absence changes his rating.</li>
+  </ul>
+  <h3>Reading the roster table</h3>
+  <ul>
+    <li><b>MIN</b> and <b>FGA</b> are per game this season. More minutes and more shots mean more chances to hit an over.</li>
+    <li><b>S</b> marks a player who has started most of his games.</li>
+    <li>A grey row means he isn't in the newest stat pull, so his numbers are from an earlier pull this season.</li>
+  </ul>
+  <h3>How the projection is built</h3>
+  <p>The desk uses this season's games only, with nothing from last year. It takes each player's per-minute production this season and multiplies it by his expected minutes. Players with fewer than 5 games get a wider range, because a few games can swing a lot. A high game total scales counting stats up, and a big spread trims a starter's minutes for blowout risk.</p>
+  <h3>How the edge is figured</h3>
+  <p>The projection becomes a probability of going over or under, using a typical game-to-game swing for that stat. That is compared to the payout from your odds. EV is the expected profit per $1 bet. <b>Strong</b> is 7% to 20%, <b>Lean</b> is 3% to 7%, and <b>Pass</b> is below 3%. Anything 20% or more is marked <b>Check first</b>: real edges are rarely that big, so it usually means the model is missing news, a team change, or blowout risk.</p>
+  <h3>What it doesn't know</h3>
+  <p>Injuries, rest, and lineup news. Check those first, and use the minutes box when a role changes. Deep bench players outside each team's main rotation aren't loaded yet.</p>
+</main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const TC={ATL:["#E03A3E","#C1D32F"],BOS:["#007A33","#BA9653"],BRK:["#111111","#FFFFFF"],CHO:["#1D1160","#00788C"],CHI:["#CE1141","#111111"],CLE:["#860038","#FDBB30"],DAL:["#00538C","#B8C4CA"],DEN:["#0E2240","#FEC524"],DET:["#C8102E","#1D42BA"],GSW:["#1D428A","#FFC72C"],HOU:["#CE1141","#C4CED4"],IND:["#002D62","#FDBB30"],LAC:["#C8102E","#1D428A"],LAL:["#552583","#FDB927"],MEM:["#5D76A9","#12173F"],MIA:["#98002E","#F9A01B"],MIL:["#00471B","#EEE1C6"],MIN:["#0C2340","#78BE20"],NOP:["#0C2340","#C8102E"],NYK:["#006BB6","#F58426"],OKC:["#007AC1","#EF3B24"],ORL:["#0077C0","#C4CED4"],PHI:["#006BB6","#ED174C"],PHO:["#1D1160","#E56020"],POR:["#E03A3E","#111111"],SAC:["#5A2D81","#B4B9BF"],SAS:["#C4CED4","#111111"],TOR:["#CE1141","#111111"],UTA:["#002B5C","#F9A01B"],WAS:["#002B5C","#E31837"]};
+const isLight=h=>{const n=parseInt(h.slice(1),16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))>170};
+function badge(t,sz){const [c1,c2]=TC[t]||["#444","#999"];return `<span class="tb${sz?" "+sz:""}${isLight(c1)?" light":""}" style="--c1:${c1};--c2:${c2}" aria-hidden="true">${t}</span>`}
+function initials(n){const w=n.replace(/\b(Jr\.?|Sr\.?|II|III|IV)\b/g,"").trim().split(/\s+/);return ((w[0]||"")[0]||"")+((w[w.length-1]||"")[0]||"")}
+function avatar(n,t,sz){const [c1,c2]=TC[t]||["#4B3E7A","#9B6BFF"];return `<span class="av${sz?" "+sz:""}${isLight(c1)?" light":""}" style="--c1:${c1};--c2:${c2}" aria-hidden="true">${esc(initials(n))}</span>`}
+const DATA = {"teams":{"ATL":"Atlanta Hawks","BOS":"Boston Celtics","BRK":"Brooklyn Nets","CHO":"Charlotte Hornets","CHI":"Chicago Bulls","CLE":"Cleveland Cavaliers","DAL":"Dallas Mavericks","DEN":"Denver Nuggets","DET":"Detroit Pistons","GSW":"Golden State Warriors","HOU":"Houston Rockets","IND":"Indiana Pacers","LAC":"Los Angeles Clippers","LAL":"Los Angeles Lakers","MEM":"Memphis Grizzlies","MIA":"Miami Heat","MIL":"Milwaukee Bucks","MIN":"Minnesota Timberwolves","NOP":"New Orleans Pelicans","NYK":"New York Knicks","OKC":"Oklahoma City Thunder","ORL":"Orlando Magic","PHI":"Philadelphia 76ers","PHO":"Phoenix Suns","POR":"Portland Trail Blazers","SAC":"Sacramento Kings","SAS":"San Antonio Spurs","TOR":"Toronto Raptors","UTA":"Utah Jazz","WAS":"Washington Wizards"},"players":[["Luka Dončić","LAL","PG",8,8,35.6,23.5,13.6,10.5,38.5,8.1,8.0,5.9,0,[64,35.8,33.5,7.7,8.3,4.0]],["Stephen Curry","GSW","PG",7,7,28.7,18.3,10.7,8.1,29.9,3.7,4.4,4.7,0,[43,30.9,26.6,3.6,4.7,4.4]],["Ty Jerome","MEM","PG",7,7,30.7,19.0,6.9,6.6,27.4,3.6,5.3,2.6,0,null],["Jayson Tatum","BOS","SF",7,7,35.1,20.1,6.9,9.9,27.0,6.0,7.9,1.6,0,null],["Jamal Murray","DEN","PG",7,7,37.0,16.6,8.1,6.7,25.4,5.4,5.9,4.1,0,[75,35.4,25.4,4.4,7.1,3.3]],["Cooper Flagg","DAL","SF",7,7,34.4,18.0,4.7,7.4,24.3,6.3,6.3,1.0,0,[70,33.5,21.0,6.7,4.5,1.0]],["Cade Cunningham","DET","PG",8,8,33.4,17.8,6.9,6.3,24.0,5.6,7.6,2.3,0,[64,33.9,23.9,5.5,9.9,2.0]],["Nikola Jokić","DEN","C",7,7,36.0,18.1,4.6,4.7,23.4,9.7,9.3,1.0,0,[65,34.8,27.7,12.9,10.7,1.7]],["Austin Reaves","LAL","SG",9,9,35.9,14.4,5.4,6.4,23.3,3.2,5.0,2.3,0,[51,34.5,23.3,4.7,5.5,2.3]],["Kyrie Irving","DAL","PG",6,6,29.8,16.8,9.2,3.5,22.7,4.0,4.8,3.5,0,null],["Donovan Mitchell","CLE","SG",8,8,33.4,16.0,7.0,5.0,22.5,5.0,5.5,2.9,0,[70,33.5,27.9,4.5,5.7,3.2]],["Alperen Şengün","HOU","C",7,7,35.1,15.6,2.0,6.1,22.4,9.1,8.1,1.0,0,[72,33.3,20.4,8.9,6.2,0.6]],["Brandon Miller","CHO","SF",9,9,32.9,21.7,11.2,4.0,22.0,5.3,2.3,3.0,0,[65,30.3,20.2,4.9,3.3,3.1]],["Tyrese Haliburton","IND","PG",4,4,33.0,15.5,6.8,3.8,21.8,4.5,9.5,2.5,0,null],["Nickeil Alexander-Walker","ATL","SG",9,9,30.4,16.4,10.1,3.8,21.7,3.3,2.7,4.1,0,[78,33.4,20.8,3.4,3.7,3.2]],["Michael Porter Jr.","BRK","SF",8,8,33.3,15.4,9.0,5.0,21.4,7.4,1.3,3.5,0,[52,32.5,24.2,7.1,3.0,3.4]],["Paul George","BOS","PF",7,7,31.6,16.1,8.3,3.7,21.3,5.6,5.0,3.4,0,[37,30.7,17.3,5.3,3.6,2.7]],["Pascal Siakam","IND","PF",8,8,31.9,16.1,4.1,5.3,21.3,7.1,3.8,1.3,0,[62,33.2,24.0,6.6,3.8,1.7]],["Yaxel Lendeborg","GSW","SF",9,9,31.8,14.0,5.9,6.4,21.0,7.1,4.1,2.3,0,null],["Julius Randle","BRK","PF",8,8,33.9,14.9,5.1,8.0,21.0,7.1,4.8,1.8,0,[79,33.0,21.1,6.7,5.0,1.4]],["Darius Garland","LAC","PG",8,8,33.8,16.1,6.9,4.0,20.9,1.6,6.6,2.5,0,[45,29.9,18.8,2.4,6.7,2.7]],["Kevin Durant","HOU","SF",9,9,33.7,12.4,3.6,7.4,20.8,5.2,3.0,1.4,0,[78,36.4,26.0,5.5,4.8,2.4]],["Caleb Wilson","CHI","PF",8,8,32.6,17.1,7.9,4.5,19.5,6.5,2.4,2.4,0,null],["Norman Powell","CHI","SG",8,8,28.8,12.9,6.9,8.6,19.3,2.5,1.6,2.1,0,[58,29.6,21.7,3.5,2.5,2.7]],["Andrew Nembhard","IND","SG",7,7,33.4,13.6,6.1,4.4,19.0,2.1,6.9,2.4,0,[57,31.3,16.9,2.8,7.7,1.9]],["Duncan Robinson","DET","SF",8,8,31.0,11.9,9.1,4.0,19.0,1.9,2.3,4.4,0,[77,27.4,12.2,2.7,2.1,2.9]],["Evan Mobley","CLE","PF",8,8,32.8,12.5,4.4,4.1,18.8,8.3,3.5,2.1,0,[65,31.9,18.2,9.0,3.6,1.0]],["Jalen Johnson","ATL","PF",7,7,32.6,15.3,4.4,5.1,18.3,9.0,8.0,1.1,0,[72,35.2,22.5,10.3,7.9,1.7]],["Jabari Smith Jr.","HOU","PF",9,9,34.7,11.8,6.1,3.2,17.6,6.1,2.3,3.0,0,[77,35.1,15.8,6.9,1.9,2.3]],["Naz Reid","CHO","C",9,9,29.6,15.2,6.7,2.6,16.9,8.3,1.9,2.3,0,[77,26.1,13.6,6.2,2.2,2.1]],["James Harden","CLE","PG",8,8,33.8,12.9,7.3,5.1,16.6,5.3,6.3,2.6,0,[70,34.8,23.6,4.8,8.0,3.1]],["Cameron Boozer","MEM","PF",8,8,32.3,13.8,6.1,4.5,16.5,9.8,5.4,2.3,0,null],["Brandin Podziemski","GSW","SG",7,7,33.3,12.6,6.6,3.1,15.9,5.1,4.7,2.3,0,[82,28.5,13.8,5.1,3.7,1.9]],["Amen Thompson","HOU","SF",9,9,32.7,11.6,1.0,4.4,15.4,6.3,3.3,0.2,0,[79,37.4,18.3,7.8,5.3,0.3]],["Rui Hachimura","LAC","PF",6,6,31.2,13.8,6.3,3.2,14.7,6.5,1.7,2.2,0,[68,28.3,11.5,3.3,0.8,1.7]],["Christian Braun","DEN","SG",7,7,35.1,10.1,4.7,1.7,14.6,3.9,2.3,2.0,0,[44,31.8,12.0,4.8,2.7,1.0]],["Obi Toppin","IND","PF",6,0,22.2,9.7,4.8,3.0,14.5,5.2,1.2,2.0,0,[24,17.7,11.6,4.4,2.3,1.5]],["P.J. Washington","DAL","PF",8,8,34.6,12.3,6.5,3.8,14.5,8.0,1.4,2.0,0,[56,31.0,14.2,7.0,1.8,1.4]],["Walker Kessler","LAL","C",9,9,30.6,8.7,0.0,3.6,14.4,10.2,1.1,0.0,0,null],["Cedric Coward","MEM","SG",7,7,29.3,11.1,5.4,1.4,14.3,8.7,2.7,2.7,0,[62,25.8,13.6,5.9,2.8,1.5]],["CJ McCollum","ATL","PG",9,8,26.6,11.8,5.6,2.3,14.3,3.0,4.1,2.0,0,[76,29.8,18.7,3.3,3.9,2.5]],["Aaron Wiggins","ATL","SG",9,0,25.8,11.7,6.6,0.9,13.9,3.7,1.9,2.7,0,null],["Naji Marshall","DAL","SF",5,1,26.6,11.4,3.6,1.6,13.6,3.4,5.4,1.2,0,[74,29.5,15.2,4.7,3.3,0.8]],["Brook Lopez","LAC","C",8,2,23.5,9.4,3.3,2.4,13.5,5.1,1.0,1.4,0,null],["Jarrett Allen","CLE","C",8,8,25.3,8.3,0.4,4.0,13.3,7.8,1.3,0.3,0,[56,27.1,15.4,8.5,1.8,0.0]],["Jalen Duren","DET","C",2,2,19.0,8.5,0.0,3.5,13.0,7.5,2.0,0.0,0,[70,28.2,19.5,10.5,2.0,0.0]],["Payton Pritchard","BOS","PG",8,0,26.8,9.9,5.3,3.6,13.0,2.8,3.6,1.6,0,[79,32.4,17.0,3.9,5.2,2.7]],["Meleek Thomas","CLE","SG",5,1,21.4,10.8,5.6,0.4,13.0,2.6,0.8,2.6,0,null],["Fred VanVleet","HOU","PG",7,7,30.0,11.0,7.6,2.1,13.0,3.6,6.3,2.6,0,null],["Matas Buzelis","CHI","SF",8,8,25.1,9.5,4.6,4.8,12.9,4.4,2.0,1.3,0,[77,29.2,16.3,5.8,2.1,2.2]],["Paul Reed","DET","C",8,6,27.3,9.3,1.0,1.9,12.8,6.8,2.4,0.6,0,null],["Derrick White","BOS","PG",8,8,30.6,10.9,5.1,2.0,12.8,3.3,5.1,1.5,0,[77,34.1,16.5,4.4,5.4,2.7]],["Aaron Nesmith","IND","SF",7,6,24.1,10.3,5.6,3.3,12.7,2.0,1.9,1.7,0,[45,29.7,13.8,4.2,1.9,2.3]],["Aaron Gordon","DEN","PF",7,7,29.6,8.9,4.0,4.0,12.3,5.3,2.4,1.4,0,[36,27.9,16.2,5.8,2.7,1.7]],["Onyeka Okongwu","ATL","C",9,9,29.1,10.3,4.6,1.8,12.2,8.4,2.8,1.3,0,[74,31.0,15.2,7.6,3.1,1.9]],["Mikel Brown Jr.","BRK","PG",6,0,22.8,11.3,6.2,3.0,12.0,2.3,4.0,1.8,0,null],["Nolan Traoré","BRK","PG",8,5,22.1,8.8,3.6,2.1,12.0,2.3,2.8,1.8,0,null],["Keaton Wagler","LAC","SG",8,0,23.8,8.5,4.6,6.0,12.0,4.1,3.3,1.6,0,null],["Isaiah Stewart","MEM","C",7,1,18.3,6.9,2.0,1.6,11.9,3.4,0.6,1.1,0,[58,22.7,10.0,5.0,1.1,0.7]],["Derrick Jones Jr.","LAC","SF",7,7,29.9,8.6,4.3,0.9,11.6,5.3,1.4,2.1,0,[50,27.0,10.1,3.5,1.4,1.1]],["Brandon Williams","GSW","PG",8,1,17.8,8.8,2.6,4.1,11.4,2.6,2.6,0.9,0,[66,22.2,13.0,2.9,3.9,0.5]],["Jaylen Wells","MEM","SG",8,8,27.3,7.9,4.9,1.6,11.1,3.4,1.5,1.8,0,[69,26.4,12.5,3.2,1.6,1.9]],["Jalen Smith","CHI","C",8,8,22.5,9.0,4.9,1.5,11.0,7.8,1.8,1.4,0,[53,20.7,10.2,6.7,1.2,1.5]],["Tre Jones","CHI","PG",8,0,18.3,6.9,0.8,4.5,10.9,2.9,3.1,0.4,0,[65,27.0,14.1,3.1,5.4,0.6]],["Peyton Watson","CLE","SF",6,6,28.5,10.3,4.0,3.2,10.8,4.0,3.0,0.7,0,[54,29.6,14.6,4.9,2.1,1.5]],["DeMar DeRozan","DEN","SF",6,0,25.0,8.7,1.5,4.0,10.7,2.0,2.7,0.3,0,[77,31.2,18.4,2.9,4.1,0.6]],["Reed Sheppard","HOU","PG",6,1,21.8,9.8,7.3,0.7,10.7,2.3,3.7,2.3,0,[82,26.2,13.5,2.9,3.4,2.8]],["Ziaire Williams","LAL","SF",6,4,25.3,6.8,4.2,1.7,10.7,3.0,2.0,1.8,0,[56,22.9,10.2,2.4,1.1,1.5]],["Quenton Jackson","IND","PG",9,1,21.8,7.8,3.3,2.4,10.4,3.4,2.7,1.1,0,null],["Moritz Wagner","BRK","C",8,0,18.9,6.6,2.0,2.5,10.4,3.4,1.1,1.1,0,null],["Tari Eason","HOU","PF",9,1,24.4,8.4,3.3,1.7,10.2,5.9,1.2,0.9,0,[60,25.8,10.5,6.3,1.5,1.6]],["Dennis Schröder","CHO","PG",9,7,29.9,9.8,3.9,2.7,10.2,3.6,4.8,0.8,0,[70,24.2,10.8,2.7,4.9,1.1]],["Kobe Sanders","LAC","SG",8,2,24.4,7.9,4.6,1.6,10.1,3.0,2.0,1.8,0,null],["De'Anthony Melton","GSW","SG",9,2,22.3,7.4,5.0,2.0,10.0,4.7,2.2,2.1,0,[49,23.0,12.3,3.2,2.6,1.5]],["Max Strus","LAC","SF",2,0,23.0,10.5,9.0,1.5,10.0,4.5,5.5,3.0,0,null],["Ausar Thompson","DET","SF",7,7,27.6,7.6,0.4,2.7,9.9,8.6,4.7,0.0,0,[73,26.0,9.9,5.7,3.1,0.1]],["Neemias Queta","BOS","C",8,3,22.6,6.0,0.4,4.0,9.8,6.3,1.4,0.3,0,[76,25.3,10.2,8.4,1.7,0.0]],["Collin Sexton","LAL","SG",8,0,17.3,8.3,3.8,2.5,9.8,2.1,2.4,1.0,0,[68,23.7,15.4,2.3,3.3,1.6]],["Marcus Smart","HOU","PG",6,1,23.0,7.2,5.2,1.8,9.8,2.8,2.5,2.0,0,null],["Dyson Daniels","ATL","SF",9,9,29.7,9.6,1.6,1.8,9.6,6.7,4.6,0.1,0,[76,33.2,11.9,6.8,5.9,0.3]],["Jerami Grant","MEM","PF",8,0,24.4,8.4,4.1,2.4,9.6,2.4,2.1,1.5,0,[57,29.7,18.6,3.5,2.1,2.4]],["John Collins","DET","PF",8,8,25.6,8.5,2.6,0.9,9.4,5.9,0.5,0.9,0,[69,27.1,13.6,5.3,1.0,1.3]],["Kelly Oubre Jr.","IND","SF",7,5,23.1,8.0,3.9,2.3,9.4,2.6,1.6,1.0,0,[50,31.5,14.1,5.0,1.6,1.7]],["Josh Giddey","CHI","PG",8,8,27.1,9.0,3.5,1.9,9.3,4.6,7.6,1.0,0,[54,32.1,17.0,8.3,9.1,1.9]],["Daniss Jenkins","DET","PG",8,1,24.0,7.5,3.5,1.6,9.3,3.1,4.4,1.4,0,null],["Danny Wolf","BRK","C",3,0,15.3,5.0,4.0,1.0,9.3,4.3,2.0,2.3,0,null],["Daniel Gafford","DAL","C",8,8,23.0,5.8,0.1,2.0,9.1,6.6,2.0,0.1,0,[55,21.7,9.5,6.9,1.1,0.0]],["Cam Spencer","MEM","SG",8,1,19.8,6.4,3.4,0.5,9.1,3.8,5.8,1.9,0,[72,23.8,11.1,2.5,5.6,2.0]],["Cameron Johnson","DEN","PF",4,4,27.0,7.8,5.0,1.0,9.0,4.3,2.0,2.0,0,[54,30.5,12.2,3.8,2.4,2.0]],["Sandro Mamukelashvili","LAL","C",9,0,23.4,7.1,3.2,1.8,9.0,4.6,1.7,1.0,0,[80,21.9,11.2,4.9,1.9,1.4]],["Moussa Diabaté","CHO","C",9,9,28.8,5.8,0.0,2.1,8.9,9.1,2.1,0.0,0,null],["Luguentz Dort","ATL","PF",9,2,25.2,8.2,4.9,1.9,8.9,3.0,1.6,1.6,0,null],["Anthony Edwards","MIN","SG",4,4,33.8,26.0,11.3,5.0,33.3,4.8,3.5,4.5,0,[61,35.0,28.8,5.0,3.7,3.4]],["Shai Gilgeous-Alexander","OKC","PG",8,8,33.8,23.8,7.4,7.4,30.1,4.3,4.5,2.6,0,[68,33.2,31.1,4.3,6.6,1.7]],["Giannis Antetokounmpo","MIA","PF",9,9,32.7,18.4,2.7,9.2,27.3,12.7,5.6,0.6,0,[36,28.9,27.6,9.8,5.4,0.4]],["Jalen Brunson","NYK","PG",8,8,34.1,20.3,7.6,8.1,25.6,2.6,5.1,2.8,0,[74,35.0,26.0,3.3,6.8,2.6]],["Paolo Banchero","ORL","PF",2,2,34.0,11.5,3.0,10.0,24.5,6.5,7.5,1.5,0,[72,34.8,22.2,8.4,5.2,1.2]],["Tyler Herro","MIL","SG",8,8,30.6,17.4,8.5,3.5,22.3,5.0,3.9,3.6,0,[33,31.3,20.5,4.8,4.1,2.5]],["Zion Williamson","NOP","PF",8,8,32.9,12.8,0.9,7.4,21.5,5.1,2.6,0.4,0,[62,29.7,21.0,5.7,3.2,0.0]],["Karl-Anthony Towns","NYK","C",8,8,31.3,12.9,4.4,4.3,19.9,13.6,3.1,1.9,0,[75,31.0,20.1,11.9,3.0,1.5]],["Franz Wagner","ORL","SF",8,8,36.0,17.1,4.5,5.4,19.6,6.4,8.5,0.9,0,[34,30.0,20.6,5.2,3.3,1.4]],["Bam Adebayo","MIA","C",9,9,32.7,13.0,3.1,5.4,18.6,8.4,3.1,0.6,0,[73,32.4,20.1,10.0,3.2,1.7]],["Dejounte Murray","NOP","PG",5,5,34.8,13.8,3.6,4.4,18.2,6.2,5.6,0.8,0,null],["Ajay Mitchell","OKC","SG",8,5,27.5,13.9,3.0,3.5,17.8,4.0,3.5,0.6,0,[57,25.8,13.6,3.3,3.6,1.1]],["Desmond Bane","ORL","SG",8,8,34.5,14.1,9.5,3.6,17.5,3.9,2.3,3.5,0,[82,33.6,20.1,4.1,4.1,2.0]],["LaMelo Ball","MIN","PG",9,9,26.7,13.4,8.7,2.8,17.2,3.4,5.9,3.3,0,[72,28.0,20.1,4.8,7.1,3.8]],["Jaime Jaquez Jr.","MIL","SF",8,8,28.5,12.9,3.9,3.3,16.8,6.6,2.8,1.9,0,[75,28.3,15.4,5.0,4.7,0.8]],["OG Anunoby","NYK","PF",8,8,32.9,11.9,6.1,6.5,16.6,5.5,2.5,1.8,0,[67,33.2,16.7,5.2,2.2,2.3]],["Saddiq Bey","NOP","SF",8,0,26.6,11.3,4.8,3.6,16.4,3.9,1.9,1.8,0,[72,31.2,17.7,5.6,2.5,2.1]],["Jaden McDaniels","MIN","PF",9,9,33.2,13.6,4.3,1.3,16.4,6.2,3.6,1.3,0,[73,31.7,14.8,4.2,2.7,1.4]],["Ayo Dosunmu","MIN","SG",9,5,30.7,13.2,3.8,1.7,16.3,5.3,4.3,1.4,0,[69,27.3,14.8,3.4,3.6,1.8]],["Davion Mitchell","MIA","PG",9,9,35.1,12.7,5.4,1.7,16.1,1.6,8.2,2.2,0,null],["Anthony Black","ORL","PG",5,4,28.6,9.6,4.4,4.6,15.2,5.2,5.0,2.0,0,[64,29.8,15.0,3.8,3.7,1.6]],["Trey Murphy III","NOP","SF",7,7,33.0,11.0,5.6,3.3,14.9,4.6,3.4,2.1,0,[66,35.5,21.5,5.7,3.8,3.2]],["Tristan Da Silva","ORL","SF",8,0,29.5,11.4,8.0,0.6,14.6,3.3,1.6,3.4,0,[77,24.7,9.9,3.7,1.6,1.6]],["Wendell Carter Jr.","ORL","C",8,8,32.8,7.6,2.5,4.0,14.3,9.4,1.1,1.0,0,[78,29.3,11.8,7.4,2.0,0.9]],["Klay Thompson","MIA","SF",9,9,23.4,10.9,8.9,0.6,13.8,1.6,1.7,3.7,0,[69,21.7,11.7,2.1,1.4,2.9]],["Jalen Williams","OKC","SF",3,3,31.7,13.0,3.0,3.3,13.7,4.7,3.3,1.0,0,[33,28.4,17.1,4.6,5.5,0.7]],["Jeremiah Fears","NOP","PG",8,8,28.0,13.3,4.1,2.4,13.6,4.5,4.5,1.0,0,[82,25.8,14.3,3.7,3.4,1.2]],["Derik Queen","NOP","C",8,0,24.1,9.5,1.1,4.3,13.4,7.9,3.0,0.4,0,[81,25.0,11.7,7.1,3.7,0.3]],["Jonathan Kuminga","MIN","SF",9,9,30.9,10.3,4.6,2.7,12.7,5.7,2.9,2.1,0,[36,23.1,12.2,5.6,2.3,1.0]],["Chet Holmgren","OKC","PF",3,3,30.0,9.0,2.0,4.0,12.0,9.3,1.3,0.7,0,[69,28.9,17.1,8.9,1.7,1.3]],["Terrence Shannon Jr.","MIN","SG",7,0,22.0,8.4,4.7,4.1,12.0,3.6,2.6,1.9,0,null],["Ryan Rollins","MIL","PG",8,6,24.9,12.1,5.1,1.8,11.3,4.8,4.5,1.5,0,[74,32.1,17.3,4.6,5.6,2.5]],["Pelle Larsson","MIA","SG",9,0,30.1,7.0,2.8,4.2,11.1,3.1,3.8,1.1,0,[70,26.4,11.4,3.5,3.4,0.9]],["Kel'el Ware","MIL","C",8,0,18.9,9.3,3.3,2.4,10.3,8.3,0.8,0.8,0,[77,22.1,11.1,9.0,0.7,1.2]],["Jared McCain","OKC","SG",8,3,24.9,10.8,5.6,1.6,10.1,3.0,1.9,1.5,0,null],["Dalton Knecht","NYK","SF",1,0,16.0,6.0,4.0,0.0,10.0,7.0,1.0,2.0,0,null],["Kyle Kuzma","MIL","PF",8,8,26.4,8.9,4.3,1.0,9.5,6.3,3.0,1.3,0,[69,26.2,13.0,4.5,2.7,1.2]],["Yves Missi","NOP","C",2,2,19.5,4.5,0.0,2.0,9.5,7.5,2.5,0.0,0,null],["Landry Shamet","NYK","SG",8,1,24.9,6.9,5.0,1.8,9.4,1.5,2.0,2.1,0,null],["Karlo Matković","NOP","PF",7,4,18.6,5.3,2.9,1.4,9.3,4.4,1.0,1.6,0,null],["Brayden Burries","MIL","SG",8,2,17.9,7.0,3.4,3.3,8.9,4.5,1.5,0.8,0,null],["Victor Wembanyama","SAS","C",8,8,31.6,21.9,6.3,8.1,29.0,12.4,3.1,1.5,0,[64,29.2,25.0,11.5,3.1,1.9]],["Tyrese Maxey","PHI","PG",9,9,37.0,19.9,7.3,7.2,28.0,3.8,5.4,2.6,0,[70,38.0,28.3,4.1,6.6,3.1]],["Darius Acuff Jr.","SAC","PG",8,8,37.3,23.6,9.8,4.6,25.6,3.8,7.0,3.0,0,null],["Devin Booker","PHO","SG",7,7,34.4,17.6,5.1,6.7,25.4,2.9,5.1,1.9,0,[64,33.5,26.1,3.9,6.0,1.9]],["Scottie Barnes","TOR","PF",8,8,33.3,19.8,3.3,6.3,23.5,7.6,5.1,0.5,0,[80,33.5,18.1,7.5,5.9,0.9]],["Deni Avdija","POR","SF",7,7,32.4,16.1,5.4,9.4,23.4,6.4,6.4,1.7,0,[66,33.3,24.2,6.9,6.7,1.9]],["Anthony Davis","WAS","PF",8,8,33.0,18.3,2.5,5.1,23.4,9.3,2.0,0.9,0,[20,31.3,20.4,11.1,2.8,0.5]],["Zach LaVine","SAC","SG",8,8,33.4,15.4,7.6,6.0,23.1,3.1,2.6,2.9,0,[39,31.4,19.2,2.8,2.3,2.5]],["Keyonte George","UTA","PG",8,8,32.4,16.3,6.5,6.6,22.0,4.0,5.9,2.1,0,[54,33.1,23.6,3.7,6.1,2.5]],["Jaylen Brown","PHI","SF",8,8,36.1,16.9,4.5,5.1,21.8,6.9,3.9,2.0,0,[71,34.4,28.7,6.9,5.1,2.0]],["RJ Barrett","TOR","SF",8,8,32.6,16.6,5.5,5.3,20.9,6.0,3.9,1.8,0,[57,30.3,19.3,5.3,3.3,1.7]],["Damian Lillard","POR","PG",7,7,29.7,14.3,8.6,6.6,20.1,4.1,4.1,2.7,0,null],["Joel Embiid","PHI","C",7,7,33.4,15.6,3.7,7.1,19.6,10.0,4.4,0.4,0,[38,31.6,26.9,7.7,3.9,1.4]],["Trae Young","WAS","PG",8,8,35.8,13.3,6.8,8.3,19.6,3.4,9.5,1.9,0,null],["Kawhi Leonard","TOR","SF",2,2,26.0,18.5,7.0,5.5,19.5,7.5,1.5,2.0,0,[65,32.1,27.9,6.4,3.6,2.6]],["Dylan Harper","SAS","SG",8,8,32.9,14.5,3.4,3.3,18.6,5.6,4.6,1.3,0,[69,22.6,11.8,3.4,3.9,0.9]],["Dillon Brooks","PHO","SF",7,7,30.3,12.6,4.6,3.9,17.6,3.9,2.7,2.1,0,[56,30.4,20.2,3.6,1.8,2.3]],["Miles Bridges","PHO","PF",7,7,32.4,13.6,6.4,2.7,17.4,7.9,3.1,2.3,0,[77,31.0,17.1,5.8,3.2,1.9]],["Immanuel Quickley","TOR","PG",8,8,31.8,13.8,7.9,4.1,17.4,3.5,5.8,2.6,0,[70,31.9,16.4,4.0,5.9,2.5]],["Kyshawn George","WAS","SG",8,8,32.6,12.9,5.5,2.8,17.3,4.3,4.9,1.9,0,[48,29.0,14.8,5.1,4.5,2.1]],["Lauri Markkanen","UTA","PF",7,7,30.4,13.3,8.3,4.6,17.1,6.6,2.1,3.0,0,[42,34.4,26.7,6.9,2.1,2.7]],["AJ Dybantsa","WAS","SF",4,4,30.5,13.0,3.0,4.8,16.5,5.0,2.0,0.8,0,null],["Jaren Jackson Jr.","UTA","C",4,4,26.0,11.0,3.5,5.3,16.3,5.0,2.0,1.3,0,[48,30.3,19.4,5.7,2.0,1.8]],["Ja Morant","POR","PG",4,4,25.8,12.0,3.5,1.5,15.8,2.5,5.5,1.5,0,[20,28.5,19.5,3.3,8.1,1.0]],["LeBron James","PHI","PF",7,7,33.1,13.1,3.3,4.4,15.7,7.4,7.4,0.9,0,[60,33.2,20.9,6.1,7.2,1.3]],["De'Aaron Fox","SAS","PG",8,8,30.9,9.6,2.8,4.5,15.1,4.3,6.1,1.0,0,[72,31.0,18.6,3.8,6.2,1.8]],["Domantas Sabonis","SAC","C",8,8,36.0,8.6,0.3,4.3,15.1,14.9,6.1,0.1,0,null],["Stephon Castle","SAS","SG",8,8,29.8,14.8,7.4,1.5,15.0,6.1,4.8,2.4,0,[68,30.0,16.7,5.3,7.4,1.2]],["Toumani Camara","POR","PF",7,7,27.7,8.9,7.3,1.4,13.7,2.9,1.3,3.4,0,[82,33.3,13.4,5.1,2.5,2.7]],["Jrue Holiday","POR","PG",7,0,26.0,8.7,5.7,2.3,13.4,4.4,4.1,2.4,0,[53,29.4,16.3,4.6,6.1,2.6]],["De'Andre Hunter","SAC","SF",8,8,31.1,10.4,5.5,3.1,13.0,4.8,1.3,2.0,0,[45,26.1,13.7,4.1,2.0,1.7]],["Darryn Peterson","UTA","SG",8,8,30.3,12.4,4.6,2.8,12.6,4.0,3.8,1.5,0,null],["Ace Bailey","UTA","SF",8,7,30.6,11.6,5.6,0.9,12.5,7.3,2.0,1.4,0,[72,27.6,13.8,4.2,1.8,1.9]],["VJ Edgecombe","PHI","SG",8,8,33.6,11.3,4.8,1.4,12.5,7.0,3.0,1.6,0,[75,35.0,16.0,5.6,4.2,2.0]],["Donovan Clingan","POR","C",7,7,24.6,8.3,2.1,2.4,12.0,10.6,1.6,1.0,0,[77,27.2,12.1,11.6,2.1,1.1]],["Jalen Green","PHO","SG",7,7,28.3,11.3,3.9,2.7,11.9,2.9,3.3,0.9,0,[32,25.9,17.8,3.6,2.8,2.2]],["Ja'Kobe Walter","TOR","SG",8,6,29.1,8.5,6.3,2.6,11.4,3.8,2.5,2.3,0,null],["Precious Achiuwa","SAC","C",8,6,27.1,8.9,0.9,2.4,11.0,6.1,1.3,0.3,0,[73,23.9,10.1,6.7,1.4,0.4]],["Devin Vassell","SAS","SG",8,8,31.6,9.8,4.4,2.4,10.6,4.3,3.3,1.1,0,[67,30.5,13.9,4.0,2.5,2.5]],["Anfernee Simons","PHI","SG",9,0,22.9,8.6,6.2,1.1,10.0,1.9,1.1,2.4,0,[55,24.9,14.3,2.5,2.4,2.7]],["Julian Champagnie","SAS","SF",8,0,26.6,7.3,6.5,0.9,9.8,3.8,1.4,2.8,0,[82,27.6,11.1,5.8,1.5,2.4]],["Collin Murray-Boyles","TOR","PF",8,2,20.6,7.6,1.8,1.8,9.6,4.8,1.3,0.6,0,null],["Alex Sarr","WAS","C",7,7,25.0,6.9,2.6,2.4,9.6,6.0,2.0,0.6,0,[48,27.2,16.3,7.4,2.7,1.0]],["Grayson Allen","CHO","SG",8,0,26.4,9.3,7.3,3.3,14.9,2.9,2.5,3.4,1,[51,28.8,16.5,3.0,3.8,3.1]],["Isaiah Jackson","LAC","C",7,6,22.1,6.9,0.1,1.7,9.6,6.4,2.3,0.1,1,null],["Andrew Wiggins","MIA","SF",7,7,26.9,9.3,4.9,0.9,10.3,2.6,1.4,1.4,1,[68,30.3,15.4,4.8,2.7,2.0]],["Alex Caruso","OKC","SG",4,0,19.0,5.8,4.0,1.0,9.3,4.8,3.8,2.0,1,null],["Keldon Johnson","SAS","SF",7,0,23.0,7.6,1.0,2.3,9.3,5.6,1.1,0.3,1,[82,23.3,13.2,5.4,1.4,1.2]],["Tre Johnson","WAS","SG",6,0,20.8,8.2,4.3,1.2,9.3,2.2,0.7,1.2,1,[60,24.1,12.2,2.8,2.0,1.9]],["Brice Sensabaugh","UTA","SF",7,0,15.3,7.0,4.1,1.4,9.3,3.0,1.1,1.9,1,[75,23.5,14.9,3.1,1.9,2.2]],["Mo Bamba","UTA","",2,null,22.0,null,null,null,11.0,5.5,1.0,0.0,1,null],["Bobby Portis","MIA","",5,null,24.0,null,null,null,10.4,8.2,1.8,2.0,1,[67,24.2,13.7,6.4,1.6,2.0]],["Quentin Grimes","LAL","",5,null,27.0,null,null,null,10.2,3.6,2.8,0.6,1,[75,29.4,13.4,3.6,3.3,1.7]],["Luke Kennard","PHO","",2,null,17.0,null,null,null,10.0,2.0,1.5,3.0,1,null],["Caleb Martin","DAL","",1,null,14.0,null,null,null,10.0,1.0,1.0,2.0,1,null],["Bilal Coulibaly","WAS","",5,null,27.2,null,null,null,9.8,3.8,0.4,0.6,1,[56,26.2,11.7,4.3,2.6,1.2]],["Sam Hauser","BOS","",4,null,21.5,null,null,null,9.8,3.5,1.0,2.8,1,null],["Leonard Miller","CHI","",5,null,20.2,null,null,null,9.8,4.4,0.8,1.0,1,null],["Robert Williams","POR","",3,null,18.0,null,null,null,9.7,8.7,0.7,0.0,1,null],["Max Christie","DAL","",5,null,28.0,null,null,null,9.6,4.4,2.4,2.0,1,[77,29.1,12.3,3.2,2.0,2.3]],["Trevon Brazile","DEN","",4,null,23.8,null,null,null,9.5,7.5,0.0,1.3,1,null],["Isaiah Hartenstein","OKC","",5,null,23.8,null,null,null,9.4,9.6,2.4,0.0,1,null],["Matisse Thybulle","LAL","",5,null,24.6,null,null,null,9.4,1.6,1.0,2.4,1,null],["Gui Santos","GSW","",4,null,24.0,null,null,null,9.3,4.0,1.5,1.0,1,null],["Josh Hart","NYK","",5,null,32.8,null,null,null,9.0,7.8,3.4,1.8,1,[66,30.2,12.0,7.4,4.8,1.5]],["Kasparas Jakučionis","MIL","",5,null,22.6,null,null,null,9.0,2.8,4.2,0.6,1,null]],"sched":{"2026-11-04":[["PHI","DET"],["ATL","WAS"],["CHI","NYK"],["CHO","BRK"],["MIL","BOS"],["IND","MEM"],["UTA","NOP"],["CLE","OKC"],["MIN","HOU"],["POR","PHO"],["TOR","DEN"],["DAL","SAS"],["LAL","SAC"],["MIA","LAC"]],"2026-11-05":[["ORL","PHO"],["MIA","GSW"]],"2026-11-06":[["BOS","CHO"],["WAS","ATL"],["PHI","CLE"],["OKC","MEM"],["MIN","NOP"],["TOR","MIL"],["UTA","DAL"],["POR","LAL"],["SAS","SAC"]],"2026-11-07":[["DEN","IND"],["BRK","ATL"],["WAS","OKC"],["NYK","CLE"],["ORL","GSW"],["HOU","PHO"],["SAS","POR"]],"2026-11-08":[["PHI","CHI"],["LAL","DET"],["UTA","MIN"],["BRK","DAL"],["BOS","MIL"],["MIA","SAC"],["NOP","LAC"]],"2026-11-09":[["LAL","ATL"],["CLE","CHO"],["WAS","DET"],["MEM","TOR"],["IND","DAL"],["DEN","HOU"],["SAS","PHO"],["NOP","GSW"]],"2026-11-10":[["MIL","NYK"],["BOS","PHI"],["LAC","PHO"],["MIA","UTA"],["ORL","SAC"],["OKC","POR"]],"2026-11-11":[["CLE","NYK"],["WAS","IND"],["BOS","TOR"],["LAL","MIL"],["SAS","CHI"],["DEN","MEM"],["BRK","NOP"],["ORL","UTA"],["GSW","HOU"],["OKC","POR"]],"2026-11-12":[["TOR","PHI"],["DET","WAS"],["DAL","MIN"],["CHO","PHO"]],"2026-11-13":[["NYK","IND"],["MIL","ORL"],["CLE","MIA"],["ATL","CHI"],["MEM","NOP"],["UTA","HOU"],["GSW","SAS"],["POR","SAC"],["OKC","LAC"]],"2026-11-14":[["DEN","NOP"],["DAL","CLE"],["BRK","MEM"],["CHI","MIN"],["DET","MIA"]],"2026-11-15":[["IND","PHI"],["LAL","PHO"],["CHO","LAC"],["SAS","UTA"],["DAL","BOS"],["NYK","TOR"],["HOU","WAS"],["ATL","MIL"],["OKC","SAC"]],"2026-11-16":[["ORL","BOS"],["CHI","CLE"],["MEM","WAS"],["HOU","MIA"],["PHI","BRK"],["POR","MIN"],["GSW","NOP"],["PHO","DEN"]],"2026-11-17":[["NYK","TOR"],["POR","MIN"],["DET","SAS"],["CHO","LAL"],["UTA","LAC"]],"2026-11-18":[["PHI","ORL"],["HOU","IND"],["MEM","CLE"],["MIL","MIA"],["CHI","BRK"],["WAS","TOR"],["DET","NOP"],["ATL","OKC"],["BOS","DEN"],["GSW","DAL"],["UTA","LAL"],["PHO","SAC"]],"2026-11-19":[["NYK","MIN"],["GSW","MEM"],["LAC","SAS"],["POR","MIL"]],"2026-11-20":[["CHO","ATL"],["IND","CLE"],["TOR","DET"],["ORL","BRK"],["NOP","OKC"],["WAS","CHI"],["PHO","UTA"],["HOU","DEN"],["SAC","LAL"]],"2026-11-21":[["MIL","PHI"],["POR","NYK"],["LAC","DAL"],["MEM","MIN"],["NOP","SAS"],["BOS","SAC"]],"2026-11-22":[["DET","ATL"],["OKC","MIA"],["DAL","UTA"],["DEN","CHI"],["ORL","WAS"],["IND","NYK"],["BOS","GSW"]],"2026-11-23":[["POR","PHI"],["MEM","CHO"],["BRK","MIN"],["OKC","IND"],["MIL","TOR"],["PHO","NOP"],["CLE","CHI"],["LAC","HOU"],["UTA","LAL"],["SAS","SAC"]],"2026-11-24":[["DET","ORL"],["BOS","WAS"],["DAL","DEN"]],"2026-11-25":[["MIA","PHI"],["CHI","CHO"],["MIN","OKC"],["CLE","NYK"],["LAC","MEM"],["BRK","MIL"],["PHO","HOU"],["SAC","GSW"],["SAS","POR"]],"2026-11-27":[["MIA","NYK"],["MIL","DET"],["PHI","IND"],["BRK","TOR"],["ATL","BOS"],["MEM","MIN"],["DAL","PHO"],["GSW","POR"],["LAL","SAS"],["DEN","UTA"],["NOP","LAC"]],"2026-11-28":[["ORL","WAS"],["BRK","CHO"],["OKC","MIL"],["IND","CHI"],["PHI","HOU"]],"2026-11-29":[["LAL","MEM"],["BOS","SAS"],["PHO","UTA"],["ATL","NYK"],["ORL","DET"],["NOP","POR"],["MIA","CLE"],["DEN","TOR"],["LAC","GSW"],["MIN","SAC"]],"2026-11-30":[["DEN","DET"],["WAS","CHO"],["OKC","BRK"],["LAL","HOU"],["SAS","MIL"],["BOS","DAL"],["NOP","SAC"]]},"inj":{"ATL":[["K. Gilbert","Out","Knee"],["A. Newell","Out","Toe"],["Jock Landale","Out","Hip"],["Jalen Johnson","Questionable","Ankle"],["H. Veesaar","Out for season","ACL"],["M. Gueye","Out","Foot"]],"BOS":[["Payton Pritchard","Questionable","Eye"],["D. Carter","Out","Illness"]],"BRK":[["Noah Clowney","Day-to-day","Knee"],["E. Demin","Out","Leg"]],"CHO":[["Dennis Schröder","Questionable","Soreness"],["Moussa Diabaté","Questionable","Quadriceps"],["Kon Knueppel","Out","Leg"],["G. Williams","Out","Hamstring"]],"CHI":[["Nic Claxton","Day-to-day","Hamstring"],["Jalen Smith","Day-to-day","Hand"]],"CLE":[["T. Proctor","Questionable","Ankle"],["Jarrett Allen","Questionable","Knee"],["Peyton Watson","Questionable","Hamstring"],["Jaylon Tyson","Out","Ankle"],["N. Tomlin","Out","Back"]],"DAL":[["Max Christie","Probable","Hip"],["Santi Aldama","Probable","Knee"],["S. De Larrea","Out","Knee"],["T. Biberovic","Out","Heel"],["D. Lively II","Out","Foot"]],"DEN":[["DeMar DeRozan","Day-to-day","Back"],["S. Jones","Day-to-day","Hamstring"],["J. Strawther","Out","Knee"]],"DET":[["Isaiah Joe","Day-to-day","Hip"],["Jalen Duren","Out","Hamstring"]],"GSW":[["Gui Santos","Day-to-day","Knee"],["Kristaps Porziņģis","Out","Illness"],["Moses Moody","Out","Knee"],["J. Butler III","Out","Knee"]],"HOU":[["C. Capela","Day-to-day","Ankle"],["S. Adams","Out","Calf"]],"IND":[["Kelly Oubre Jr.","Day-to-day","Calf"],["T.J. McConnell","Out","Hamstring"],["Tyrese Haliburton","Out","Hamstring"],["B. Sheppard","Out","Meniscus"],["J. Furphy","Out for season","ACL"]],"LAC":[["Brandon Ingram","Out","Heel"],["Y. Niederhauser","Out","Lisfranc"],["B. Beal","Out","Knee"],["J. Miller","Out","Shoulder"]],"LAL":[["Sandro Mamukelashvili","Questionable","Illness"]],"MEM":[["Isaiah Stewart","Out","Knee"],["S. Pippen Jr.","Out","Back"]],"MIL":[["Kam Jones","Day-to-day","Ankle"]],"MIN":[["Terrence Shannon Jr.","Questionable","Hip"],["Anthony Edwards","Out","Knee"],["Donte DiVincenzo","Out","Achilles"]],"NOP":[["Trey Murphy III","Probable","Knee"],["Yves Missi","Out","Knee"]],"NYK":[["Josh Hart","Day-to-day","Ankle"]],"OKC":[["Jaylin Williams","Day-to-day","Back"],["Nikola Topic","Out","Back"],["Thomas Sorber","Out","Knee"],["Cason Wallace","Out","Shoulder"],["Chet Holmgren","Out","Knee"],["Jalen Williams","Out","Fibula/ankle"]],"ORL":[["Jonathan Isaac","Out","Knee"],["Jalen Suggs","Out","Knee"],["Paolo Banchero","Out","Ankle"],["Noah Penda","Out","Hamstring"],["Izaiyah Nelson","Out","Ankle"]],"PHI":[["Adem Bona","Day-to-day","Head"],["Dominick Barlow","Out","Back"],["Ariel Hukporti","Out","Achilles"]],"PHO":[["Rasheer Fleming","Out","Ankle"],["Jordan Goodwin","Out","Calf"],["Mark Williams","Out","Shoulder"]],"POR":[["Vit Krejci","Out","Leg"],["Ja Morant","Out","Hamstring"],["Shaedon Sharpe","Out","Knee"]],"SAC":[["Daeqwon Plowden","Day-to-day","Illness"],["Maxime Raynaud","Out","Knee"],["Keegan Murray","Out","Ankle"],["Ben Simmons","Out","Achilles"]],"SAS":[["Tobias Harris","Out","Calf"],["Jayden Quaintance","Out","Not cleared"]],"TOR":[["Kawhi Leonard","Out","Knee"],["Nate Bittle","Out","Foot"]],"UTA":[["Jusuf Nurkic","Out","Foot"],["Jaren Jackson Jr.","Out","Knee"],["Trey Alexander","Out","Knee"]],"WAS":[["Reece Beekman","Out","Shoulder"],["Tristan Vukcevic","Out","Hip"],["Justin Champagnie","Out","Foot"],["Jamir Watkins","Out","ACL"]]},"injAsOf":"Nov 6"};
+const TEAMS = DATA.teams;
+const P = new Map();
+DATA.players.forEach(r=>{
+  const [n,t,pos,G,GS,MP,FGA,TPA,FTA,PTS,REB,AST,TPM,stale,pri]=r;
+  P.set(n,{name:n,team:t,pos,GS,stale:!!stale,cur:{G,MP,FGA,TPA,FTA,PTS,REB,AST,TPM},pri:pri?{G:pri[0],MP:pri[1],PTS:pri[2],REB:pri[3],AST:pri[4],TPM:pri[5]}:null});
+});
+let INJ = DATA.inj||{};
+const INJP = new Map();
+Object.values(INJ).forEach(l=>l.forEach(([n,s,w])=>INJP.set(n,{s,w})));
+const injClass=s=>/out/i.test(s)?"out":/prob/i.test(s)?"p":"q";
+const BASE_INJ=JSON.parse(JSON.stringify(DATA.inj||{}));
+const baseStatus=new Map(); Object.values(BASE_INJ).forEach(l=>l.forEach(([n,s])=>baseStatus.set(n,s)));
+const normName=s=>String(s).normalize("NFKD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[.'’]/g,"").replace(/\s+(jr|sr|ii|iii|iv)$/,"").replace(/\s+/g," ").trim();
+let NAMEKEY=null; function ourName(n){if(!NAMEKEY){NAMEKEY=new Map();P.forEach((v,k)=>NAMEKEY.set(normName(k),k))}return NAMEKEY.get(normName(n))||n}
+const E2O={BKN:"BRK",CHA:"CHO",GS:"GSW",NO:"NOP",NY:"NYK",PHX:"PHO",SA:"SAS",UTAH:"UTA",WSH:"WAS"};
+const TL={check:"Check first",strong:"Strong",lean:"Lean",pass:"Pass"};
+let LIVE=null, AUTO_OUT=new Set(), INJ_CHANGES=[];
+function rebuildInjp(){INJP.clear();Object.values(INJ).forEach(l=>l.forEach(([n,s,w])=>INJP.set(n,{s,w})))}
+function saveSeen(){const m={};INJP.forEach((v,n)=>m[n]=v.s);try{localStorage.setItem("propdesk-injseen",JSON.stringify(m))}catch(e){}}
+const fmtTime=iso=>{try{return new Date(iso).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}catch(e){return ""}};
+async function loadLiveInjuries(manual){
+  try{
+    const r=await fetch("/api/injuries",{cache:"no-store"}); if(!r.ok) throw new Error("http");
+    const j=await r.json(); if(!j||!Array.isArray(j.items)) throw new Error("shape");
+    const inj={};
+    j.items.forEach(it=>{const ab=E2O[it.abbr]||it.abbr; if(!TEAMS[ab]||!it.player) return; (inj[ab]=inj[ab]||[]).push([ourName(it.player),it.status||"Out",it.injury||"—"])});
+    INJ=inj; rebuildInjp();
+    AUTO_OUT=new Set(); INJP.forEach((v,n)=>{if(/out/i.test(v.s)&&!/out/i.test(baseStatus.get(n)||""))AUTO_OUT.add(n)});
+    let seen={}; try{seen=JSON.parse(localStorage.getItem("propdesk-injseen")||"{}")||{}}catch(e){}
+    INJ_CHANGES=[];
+    if(Object.keys(seen).length){
+      INJP.forEach((v,n)=>{if(seen[n]!==v.s)INJ_CHANGES.push({n,s:v.s,was:seen[n]||null})});
+      Object.keys(seen).forEach(n=>{if(!INJP.has(n))INJ_CHANGES.push({n,s:"Off the report",was:seen[n]})});
+    } else saveSeen();
+    LIVE={updated:j.updated,fetched:j.fetched};
+    renderAll(); if(manual) toast("Injury report updated");
+  }catch(e){ if(manual) toast("Couldn't reach the live injury report. Showing the last saved one."); }
+}
+function outsFor(key){
+  const user=items.filter(i=>i.kind==="out"&&i.game===key);
+  const names=new Set(user.map(o=>o.player));
+  const [d,a,h]=key.split("|"), auto=[];
+  if(d>=todayStr()) AUTO_OUT.forEach(n=>{const p=P.get(n);if(p&&(p.team===a||p.team===h)&&!names.has(n))auto.push({player:n,game:key,auto:true,replacement:null})});
+  return [...user,...auto];
+}
+function alertsHTML(){
+  if(!LIVE) return "";
+  const t0=todayStr(), props=items.filter(i=>i.kind==="prop"&&(i.date||"")>=t0), out=[];
+  props.forEach(pr=>{const st=INJP.get(pr.player), nm=esc(pr.player), what=`${STAT_LABEL[pr.stat]} ${pr.line}`;
+    if(st&&/out/i.test(st.s)) out.push(["bad",`<b>${nm}</b> is ruled <b>Out</b>. Your ${what} prop won't play; books usually void it.`]);
+    else if(st&&/(quest|doubt|day)/i.test(st.s)) out.push(["warn",`<b>${nm}</b> is listed <b>${esc(st.s)}</b>. Watch for news before your ${what} bet.`]);
+    else if(pr.game){const tm=(P.get(pr.player)||{}).team; const mates=outsFor(pr.game).filter(o=>o.auto&&(P.get(o.player)||{}).team===tm).map(o=>o.player);
+      if(mates.length){const r=evaluate(pr); if(r) out.push(["good",`${esc(mates.join(", "))} ruled out. <b>${nm}</b> ${what} now rates <b>${TL[r.tier]}</b> (EV ${r.ev>=0?"+":""}${(r.ev*100).toFixed(1)}%).`])}}
+  });
+  const ch=INJ_CHANGES.filter(c=>P.has(c.n));
+  if(!out.length&&!ch.length) return "";
+  return `<section class="alerts" aria-live="polite">${out.map(([l,m])=>`<div class="al ${l}">${m}</div>`).join("")}${ch.length?`<div class="al info"><b>${ch.length} injury update${ch.length>1?"s":""} since you last looked:</b> ${ch.slice(0,10).map(c=>`${esc(c.n)} ${c.was?`${esc(c.was)} → `:""}<b>${esc(c.s)}</b>`).join(" · ")}${ch.length>10?` · and ${ch.length-10} more`:""} <button class="btn sm" type="button" id="inj-seen">Got it</button></div>`:""}</section>`;
+}
+const userOut=key=>new Set(outsFor(key).map(o=>o.player));
+function injOf(name,key){const o=key&&outsFor(key).find(x=>x.player===name);if(o&&!o.auto)return {s:"Out",w:"marked by you",user:true};return INJP.get(name)}
+const injShort=s=>/season/i.test(s)?"Out":/out/i.test(s)?"Out":/doubt/i.test(s)?"Doubt":/prob/i.test(s)?"Prob":/quest/i.test(s)?"Q":"DTD";
+const PRIOR_ONLY = [["Brandon Ingram",[77,33.8,21.5,5.6,3.7,1.8]],["Shaedon Sharpe",[50,29.4,20.8,4.3,2.6,2.1]],["Jimmy Butler",[38,31.1,20.0,5.6,4.9,0.8]],["Kon Knueppel",[81,31.5,18.5,5.3,3.4,3.4]],["Bennedict Mathurin",[54,30.0,17.6,5.4,2.4,1.4]],["Coby White",[50,25.0,17.4,3.4,4.0,2.3]],["Kevin Porter Jr.",[38,33.2,17.4,5.2,7.4,1.2]],["Kristaps Porziņģis",[32,24.0,16.7,5.2,2.5,1.7]],["Russell Westbrook",[64,29.0,15.2,5.4,6.7,2.0]],["Nikola Vučević",[64,28.4,15.1,8.4,3.3,1.6]],["Mikal Bridges",[82,32.8,14.4,3.8,3.7,1.9]],["Scoot Henderson",[30,24.9,14.2,2.7,3.7,1.9]],["Ivica Zubac",[48,30.1,14.1,10.6,2.2,0.0]],["Santi Aldama",[43,27.9,14.0,6.7,2.9,1.6]],["Keegan Murray",[23,34.5,14.0,5.7,1.7,1.3]],["Jalen Suggs",[57,27.6,13.8,3.9,5.5,2.1]],["Cam Thomas",[42,21.0,13.5,1.7,2.6,1.2]],["Tim Hardaway Jr.",[80,26.6,13.5,2.6,1.4,2.8]],["Jordan Poole",[39,23.9,13.4,2.0,3.1,2.5]],["Tobias Harris",[63,27.7,13.3,5.1,2.5,1.3]],["Jaylon Tyson",[66,26.9,13.2,5.1,2.2,2.0]],["Sam Merrill",[52,26.5,12.8,2.6,2.4,3.0]],["Collin Gillespie",[80,28.5,12.7,4.1,4.6,2.9]],["Deandre Ayton",[72,27.2,12.5,8.0,0.8,0.0]],["GG Jackson II",[55,21.4,12.5,4.3,1.5,1.2]],["Malik Monk",[62,22.0,12.5,1.9,3.0,2.0]],["Maxime Raynaud",[74,26.5,12.5,7.5,1.4,0.3]],["Noah Clowney",[66,27.0,12.3,4.1,1.6,2.0]],["Donte DiVincenzo",[82,30.4,12.2,4.1,3.8,3.0]],["Moses Moody",[60,25.7,12.1,3.3,1.6,2.5]],["Miles McBride",[41,26.3,12.0,2.4,2.6,2.7]],["Myles Turner",[71,26.9,11.9,5.3,1.5,2.1]],["Nic Claxton",[69,27.8,11.7,6.9,3.7,0.0]],["Isaiah Collier",[59,25.7,11.7,2.5,7.2,0.5]],["Mark Williams",[60,23.6,11.7,8.0,1.0,0.0]],["Jarace Walker",[76,25.7,11.6,5.1,2.5,1.8]],["Kyle Filipowski",[77,23.4,11.4,7.2,2.6,1.0]],["Isaiah Joe",[71,21.2,11.1,2.5,1.3,2.5]],["Rudy Gobert",[76,31.3,10.9,11.5,1.7,0.0]],["Jusuf Nurkić",[41,26.4,10.9,10.4,4.8,0.6]],["Bub Carrington",[82,27.7,10.7,3.4,4.6,2.1]],["Jakob Poeltl",[46,25.0,10.7,7.0,2.0,0.0]],["Jock Landale",[68,22.1,10.6,5.7,1.7,1.1]],["A.J. Green",[78,29.1,10.4,2.7,1.9,3.0]],["Khris Middleton",[63,22.8,10.2,3.7,2.8,1.1]],["Kevin Huerter",[69,22.4,10.0,3.5,2.6,1.4]],["Harrison Barnes",[77,25.8,9.9,2.8,1.9,1.8]],["Royce O'Neale",[78,28.4,9.8,4.8,2.7,2.7]],["Jay Huff",[82,21.0,9.5,4.0,1.5,1.5]],["T.J. McConnell",[56,17.2,9.4,2.2,5.1,0.3]]];
+PRIOR_ONLY.forEach(([n,a])=>{ if(!P.has(n)) P.set(n,{name:n,team:"",pos:"",GS:null,stale:true,cur:null,pri:{G:a[0],MP:a[1],PTS:a[2],REB:a[3],AST:a[4],TPM:a[5]}}) });
+
+const STAT_PARTS={PTS:["PTS"],REB:["REB"],AST:["AST"],"3PM":["TPM"],PRA:["PTS","REB","AST"],PR:["PTS","REB"],PA:["PTS","AST"],RA:["REB","AST"]};
+const STAT_LABEL={PTS:"Points",REB:"Rebounds",AST:"Assists","3PM":"3PM",PRA:"PRA",PR:"Pts+Reb",PA:"Pts+Ast",RA:"Reb+Ast"};
+const VAR={PTS:[1.4,0.02],REB:[1.2,0.04],AST:[1.2,0.04],TPM:[1.15,0.05]};
+const LEAGUE_TOTAL=229.5;
+
+function baseRates(pl){
+  const c=pl.cur; /* this season only, no 2025-26 numbers */
+  const mins=c?c.MP:0, r={};
+  ["PTS","REB","AST","TPM"].forEach(k=>{r[k]=c&&c.MP?c[k]/c.MP:0});
+  return {rates:r,mins,thin:!c||c.G<5,none:!c};
+}
+function project(prop){
+  const pl=P.get(prop.player); if(!pl||!pl.cur) return null;
+  const b=baseRates(pl);
+  let mins=prop.min>0?prop.min:b.mins, boost=0;
+  if(!(prop.min>0)&&prop.game){boost=teammateBoost(pl,prop.game);mins=Math.min(40,mins+boost)}
+  const sp=Math.abs(prop.spread||0);
+  if(!(prop.min>0)&&sp>=7&&mins>=26) mins*=Math.max(0.90,1-0.008*(sp-6));
+  const pace=prop.total>0?1+0.8*(prop.total/LEAGUE_TOTAL-1):1;
+  let mu=0,v=0;
+  STAT_PARTS[prop.stat].forEach(k=>{const m=b.rates[k]*mins*pace; mu+=m; v+=VAR[k][0]*m+VAR[k][1]*m*m});
+  if(STAT_PARTS[prop.stat].length>1) v*=1.12;
+  if(b.thin) v*=1.25;
+  return {mu,sd:Math.sqrt(Math.max(v,0.25)),mins,boost};
+}
+const posGrp=s=>/G/.test(s||"")?"G":/C/.test(s||"")?"C":"F";
+function autoRepl(outName,key){
+  const op=P.get(outName); if(!op) return null; const team=op.team;
+  const outs=userOut(key);
+  const gone=n=>outs.has(n)||!!(INJP.get(n)&&/out/i.test(INJP.get(n).s));
+  const mates=[...P.values()].filter(p=>p.team===team&&p.cur&&p.name!==outName&&!gone(p.name));
+  const bench=mates.filter(p=>!(p.GS!=null&&p.cur.G&&p.GS/p.cur.G>=0.5));
+  const same=bench.filter(p=>posGrp(p.pos)===posGrp(op.pos));
+  const pick=(same.length?same:bench.length?bench:mates).slice().sort((a,b)=>b.cur.MP-a.cur.MP)[0];
+  return pick?pick.name:null;
+}
+function replOf(o,key){if(o.replacement==="__spread")return null;if(o.replacement)return o.replacement;return autoRepl(o.player,key)}
+function teammateBoost(pl,key){
+  const outs=outsFor(key);
+  if(!outs.length||outs.some(o=>o.player===pl.name)) return 0;
+  const outSet=new Set(outs.map(o=>o.player));
+  const gone=n=>outSet.has(n)||!!(INJP.get(n)&&/out/i.test(INJP.get(n).s));
+  const mates=[...P.values()].filter(p=>p.team===pl.team&&p.cur&&p.cur.MP>=12&&!gone(p.name));
+  const inMates=mates.some(m=>m.name===pl.name);
+  const tot=Math.max(200,mates.reduce((s,m)=>s+m.cur.MP,0));
+  const myMin=pl.cur?pl.cur.MP:(pl.pri?pl.pri.MP:20);
+  let add=0;
+  outs.forEach(o=>{const op=P.get(o.player); if(!op||op.team!==pl.team) return;
+    const freed=baseRates(op).mins, r=replOf(o,key);
+    if(r){ if(r===pl.name) add+=Math.min(12,freed*0.65); else if(inMates) add+=Math.min(3,Math.max(freed*0.35,freed-12)*myMin/tot); }
+    else if(inMates) add+=Math.min(5,freed*myMin/tot);
+  });
+  return Math.max(0,Math.min(add,36-baseRates(pl).mins));
+}
+function phi(x){const t=1/(1+0.2316419*Math.abs(x));const d=0.3989423*Math.exp(-x*x/2);const q=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-q:q}
+const profit=o=>o>0?o/100:100/Math.abs(o);
+const implied=o=>o>0?100/(o+100):Math.abs(o)/(Math.abs(o)+100);
+function evaluate(prop){
+  const pr=project(prop); if(!pr) return null;
+  const L=prop.line;
+  const pOver=1-phi((Math.floor(L)+0.5-pr.mu)/pr.sd), pUnder=phi((Math.ceil(L)-0.5-pr.mu)/pr.sd);
+  const oneSided=prop.under==null||prop.under==="";
+  const evOver=pOver*profit(prop.over)-pUnder, evUnder=oneSided?-Infinity:pUnder*profit(prop.under)-pOver;
+  const side=evOver>=evUnder?"Over":"Under", ev=Math.max(evOver,evUnder);
+  const io=implied(prop.over),iu=oneSided?0:implied(prop.under);
+  return {...pr,oneSided,side,ev,prob:side==="Over"?pOver:pUnder,fair:oneSided?io:side==="Over"?io/(io+iu):iu/(io+iu),
+    tier:ev>=0.20?"check":ev>=0.07?"strong":ev>=0.03?"lean":"pass",odds:side==="Over"?prop.over:prop.under};
+}
+
+/* storage */
+let items=[],col=null,mode="loading";
+const LS="propdesk-v1";
+function lsLoad(){try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch(e){return []}}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify(items))}catch(e){}}
+async function putItem(it){
+  const i=items.findIndex(x=>x.id===it.id); if(i>=0) items[i]=it; else items.push(it);
+  renderAll();
+  if(col){try{await col.doc(it.id).set(it)}catch(e){toast("Couldn't save that. Check your connection and try again.")}} else lsSave();
+}
+async function delItem(id){
+  items=items.filter(x=>x.id!==id); renderAll();
+  if(col){try{await col.doc(id).delete()}catch(e){toast("Couldn't remove it. Try again.")}} else lsSave();
+}
+async function initStore(){
+  let settled=false;
+  const fallback=()=>{if(settled)return;settled=true;mode="local";items=lsLoad();renderAll()};
+  const timer=setTimeout(fallback,10000);
+  try{
+    if(!window.claude||!window.claude.use){clearTimeout(timer);return fallback()}
+    const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);
+    if(!db||!user){clearTimeout(timer);return fallback()}
+    const uid=await user.id();
+    col=db.collection("data/users/"+uid);
+    col.onSnapshot(snap=>{clearTimeout(timer);settled=true;mode="synced";items=snap.docs.map(d=>d.data()).filter(Boolean);renderAll()},
+      ()=>{clearTimeout(timer);col=null;fallback()});
+  }catch(e){clearTimeout(timer);col=null;fallback()}
+}
+
+/* helpers */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtOdds=o=>o>0?"+"+o:String(o);
+const pct=x=>(x*100).toFixed(1)+"%";
+const f1=x=>x==null?"—":Number(x).toFixed(1);
+const nick=a=>TEAMS[a].split(" ").slice(-1)[0].replace("Blazers","Trail Blazers");
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2400)}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const dlabel=s=>{const [y,m,d]=s.split("-").map(Number);const dt=new Date(y,m-1,d);return {dow:DOW[dt.getDay()],md:MON[m-1]+" "+d}};
+
+/* view state */
+const DATES=Object.keys(DATA.sched);
+const t0=todayStr();
+let selDate=DATES.find(d=>d>=t0)||DATES[DATES.length-1];
+let selGame=null, openRow=null;
+const gameKey=(d,a,h)=>d+"|"+a+"|"+h;
+const gameLines={};  /* key -> {total,spread(home)} kept in page memory; saved onto each prop */
+const draft={};      /* per open row: stat,line,over,under,book,min */
+
+function renderDates(){
+  const i=Math.max(0,DATES.indexOf(DATES.find(d=>d>=t0)||DATES[0]));
+  const show=DATES.slice(i,i+10);
+  if(!show.includes(selDate)) show.unshift(selDate);
+  $("#dates").innerHTML=show.map(d=>{const l=dlabel(d);return `<button type="button" data-date="${d}" aria-pressed="${d===selDate}">${d===t0?"Tonight":l.dow}<small>${l.md} · ${DATA.sched[d].length} games</small></button>`}).join("");
+}
+function propsFor(key){return items.filter(i=>i.kind==="prop"&&i.game===key).length}
+function renderGames(){
+  const gs=DATA.sched[selDate]||[];
+  $("#games").innerHTML=gs.map(([a,h])=>{
+    const k=gameKey(selDate,a,h),n=propsFor(k);
+    return `<button type="button" class="game" data-game="${k}" aria-pressed="${selGame===k}">
+      <span class="row">${badge(a)}<b>${esc(nick(a))}</b>${n?`<small class="pc">${n} prop${n>1?"s":""}</small>`:""}</span>
+      <span class="row">${badge(h)}<b>${esc(nick(h))}</b><small>home</small></span></button>`}).join("");
+}
+function rosterRows(team,key,isHome){
+  const isOut=p=>{const i=injOf(p.name,key);return !!(i&&/out/i.test(i.s))};
+  const list=[...P.values()].filter(p=>p.team===team&&p.cur).sort((x,y)=>(isOut(x)-isOut(y))||(y.cur.MP-x.cur.MP));
+  return list.map(p=>{
+    const c=p.cur, starter=p.GS!=null&&c.G&&p.GS/c.G>=0.5;
+    const rowId=key+"#"+p.name, open=openRow===rowId;
+    const ij=injOf(p.name,key);
+    let html=`<tr class="pl${open?" open":""}${p.stale?" stale":""}${ij&&/out/i.test(ij.s)?" isout":""}" data-row="${esc(rowId)}" tabindex="0" aria-expanded="${open}">
+      <td><div class="nc">${avatar(p.name,p.team)}<div>${ij?`<span class="ib ${injClass(ij.s)}" title="${esc(ij.s+" · "+ij.w)}">${injShort(ij.s)}</span>`:""}<span class="pn">${esc(p.name)}</span>${p.pos?`<small class="stale">${p.pos}</small>`:""}${starter?'<span class="st" title="Starter">S</span>':""}${(()=>{const bst=teammateBoost(p,key);return bst>=0.5?` <span class="ib p" title="Extra minutes from teammates out">+${bst.toFixed(0)} min</span>`:""})()}</div></div></td>
+      <td class="key num">${f1(c.MP)}</td><td class="key num">${f1(c.FGA)}</td><td class="num">${f1(c.TPA)}</td>
+      <td class="num">${f1(c.PTS)}</td><td class="num">${f1(c.REB)}</td><td class="num">${f1(c.AST)}</td><td class="num">${f1(c.TPM)}</td></tr>`;
+    if(open) html+=`<tr class="slip"><td colspan="8">${slipHTML(p,key,isHome)}</td></tr>`;
+    return html;
+  }).join("");
+}
+function teamTable(team,key,isHome){
+  const extra=items.filter(i=>i.kind==="extra"&&i.game===key&&i.team===team).map(i=>i.player);
+  return `<section class="team"><h3>${badge(team)}${esc(TEAMS[team])} <small>${isHome?"Home":"Away"} · sorted by minutes</small></h3>
+    <div class="tw"><table>
+      <thead><tr><th>Player</th><th class="key">MIN</th><th class="key">FGA</th><th>3PA</th><th>PTS</th><th>REB</th><th>AST</th><th>3PM</th></tr></thead>
+      <tbody>${rosterRows(team,key,isHome)}${extraRows(extra,team,key,isHome)}</tbody></table></div>
+  </section>`;
+}
+function extraRows(names,team,key,isHome){
+  return names.map(n=>{const p=P.get(n); if(!p) return ""; const a=p.pri||{};
+    const rowId=key+"#"+n, open=openRow===rowId;
+    let h=`<tr class="pl stale${open?" open":""}" data-row="${esc(rowId)}" tabindex="0" aria-expanded="${open}"><td><div class="nc">${avatar(n,team)}<div><span class="pn">${esc(n)}</span><small>2025-26</small></div></div></td>
+      <td class="key num">${f1(a.MP)}</td><td class="key num">—</td><td class="num">—</td><td class="num">${f1(a.PTS)}</td><td class="num">${f1(a.REB)}</td><td class="num">${f1(a.AST)}</td><td class="num">${f1(a.TPM)}</td></tr>`;
+    if(open) h+=`<tr class="slip"><td colspan="8">${slipHTML(p,key,isHome)}</td></tr>`;
+    return h;}).join("");
+}
+function currentProp(p,key,isHome){
+  const d=draft[openRow]||{}; const gl=gameLines[key]||{};
+  return {game:key,player:p.name,stat:d.stat||"PTS",line:d.line,over:d.over??-110,under:d.under??null,book:d.book||"BetMGM",
+    total:gl.total||0,spread:gl.spread?(isHome?gl.spread:-gl.spread):0,min:d.min||0};
+}
+function liveHTML(prop){
+  if(prop.line==null||prop.line===""||isNaN(prop.line)) {const pr=project({...prop,line:0}); return pr?`Projection <span class="big num">${pr.mu.toFixed(1)}</span> ${STAT_LABEL[prop.stat]} in ${pr.mins.toFixed(1)} min${pr.boost?` (+${pr.boost.toFixed(1)} from teammates out)`:""}. Type the line to see the edge.`:`<span class="warnline">No games this season yet, so there's nothing to project.</span>`}
+  if(!(Math.abs(prop.over)>=100&&(prop.under==null||Math.abs(prop.under)>=100))) return `<span class="err">Odds need to look like -110 or +120.</span>`;
+  const r=evaluate(prop); if(!r) return "";
+  return `<span class="chip ${r.tier}">${{check:"Check first",strong:"Strong",lean:"Lean",pass:"Pass"}[r.tier]}: ${r.side}</span>
+    <span>Proj <span class="big num">${r.mu.toFixed(1)}</span></span>
+    <span class="ev">EV <b class="num">${r.ev>=0?"+":""}${(r.ev*100).toFixed(1)}%</b></span>
+    ${r.tier==="check"?`<span class="ev warnline">An edge this big usually means the model is missing something: a team change, minutes limit, or blowout. Check before betting.</span>`:""}
+    ${!prop.spread?`<span class="ev warnline">No spread entered, so blowout risk isn't counted. Add it at the top of the game.</span>`:""}
+    <span class="ev">Model <b class="num">${pct(r.prob)}</b> · book <span class="num">${pct(r.fair)}</span>${r.oneSided?" (over only)":""}</span>${r.boost?`<span class="ev">+${r.boost.toFixed(1)} min from teammates out</span>`:""}`;
+}
+function slipHTML(p,key,isHome){
+  const d=draft[openRow]||{}; const prop=currentProp(p,key,isHome);
+  const opt=(v,l)=>`<option value="${v}"${(d.stat||"PTS")===v?" selected":""}>${l}</option>`;
+  const a=p.pri;
+  const tm=p.team||(items.find(i=>i.kind==="extra"&&i.game===key&&i.player===p.name)||{}).team||"";
+  return `<div class="ph">${avatar(p.name,tm,"lg")}<div><div class="phn">${esc(p.name)}</div><div class="stale">${esc(TEAMS[tm]||"")}${p.pos?" · "+esc(p.pos):""}</div></div></div>
+  <div class="slipgrid">
+    <label for="s-stat">Stat<select id="s-stat" data-f="stat">${opt("PTS","Points")}${opt("REB","Rebounds")}${opt("AST","Assists")}${opt("3PM","3PM")}${opt("PRA","Pts+Reb+Ast")}${opt("PR","Pts+Reb")}${opt("PA","Pts+Ast")}${opt("RA","Reb+Ast")}</select></label>
+    <label for="s-line">Line<input id="s-line" data-f="line" type="number" step="0.5" inputmode="decimal" placeholder="e.g. 24.5" value="${d.line??""}"></label>
+    <label for="s-over">Over<input id="s-over" data-f="over" type="number" inputmode="numeric" value="${d.over??-110}"></label>
+    <label for="s-under">Under<input id="s-under" data-f="under" type="number" inputmode="numeric" placeholder="blank if none" value="${d.under??""}"></label>
+    <label for="s-book">Book<select id="s-book" data-f="book"><option${(d.book||"BetMGM")==="BetMGM"?" selected":""}>BetMGM</option><option${d.book==="William Hill"?" selected":""}>William Hill</option></select></label>
+    <label for="s-min">Minutes<input id="s-min" data-f="min" type="number" step="0.5" inputmode="decimal" placeholder="auto" value="${d.min||""}"></label>
+    <button class="btn primary" type="button" data-add="${esc(openRow)}">Add prop</button>
+    ${(()=>{const o=outsFor(key).find(x=>x.player===p.name);return o&&o.auto?`<span class="ib out" style="align-self:center">Out per injury report</span>`:`<button class="btn" type="button" data-markout="${esc(openRow)}">${o?"Undo out":"Mark out"}</button>`})()}
+    ${(()=>{const o=outsFor(key).find(x=>x.player===p.name); if(!o) return ""; const outs=userOut(key);
+      const mates=[...P.values()].filter(q=>q.team===p.team&&q.cur&&q.name!==p.name&&!outs.has(q.name)).sort((a,b)=>b.cur.MP-a.cur.MP);
+      const sel=o.replacement||"";
+      return `<label for="s-repl" class="repl">Who takes his spot?<select id="s-repl" data-repl="${o.id||"new:"+esc(p.name)}"><option value=""${!sel?" selected":""}>Auto: ${esc(autoRepl(p.name,key)||"nobody listed")}</option>${mates.map(q=>`<option value="${esc(q.name)}"${sel===q.name?" selected":""}>${esc(q.name)} · ${f1(q.cur.MP)} min</option>`).join("")}<option value="__spread"${sel==="__spread"?" selected":""}>Spread across the team</option></select></label>`})()}
+    ${(()=>{const ex=items.find(i=>i.kind==="extra"&&i.game===key&&i.player===p.name);return ex?`<button class="btn ghost" type="button" data-delextra="${ex.id}">Remove from list</button>`:""})()}
+  </div>
+  <div class="live" id="live">${liveHTML(prop)}</div>
+  <div class="ladder" id="ladder">${ladderHTML(prop)}</div>
+  <div class="prev">${p.cur?`This season: ${f1(p.cur.PTS)} pts · ${f1(p.cur.REB)} reb · ${f1(p.cur.AST)} ast · ${f1(p.cur.TPM)} 3pm · ${f1(p.cur.FGA)} shots in ${f1(p.cur.MP)} min over ${p.cur.G} games${p.cur.G<5?". Fewer than 5 games, so the desk uses a wider range.":""}`:"No games this season yet."}</div>`;
+}
+function renderDetail(){
+  const el=$("#gd");
+  if(!selGame){el.innerHTML=`<div class="empty"><b>Pick a game above</b> to see both rosters with minutes and shot attempts.</div>`;return}
+  const [d,a,h]=selGame.split("|"); const gl=gameLines[selGame]||{};
+  const dl=dlabel(d);
+  el.innerHTML=`<div class="gd">
+    <div class="gdhead"><div class="mu">${badge(a,"lg")}<b>${esc(nick(a))}</b><span class="when">${dl.dow} ${dl.md}</span><b class="r">${esc(nick(h))}</b><span class="tb-h">${badge(h,"lg")}</span></div>
+      <div class="gl">
+        <label for="g-total">Game total<input id="g-total" data-g="total" type="number" step="0.5" inputmode="decimal" placeholder="229.5" value="${gl.total||""}"></label>
+        <label for="g-spread">${h} spread<input id="g-spread" data-g="spread" type="number" step="0.5" inputmode="decimal" placeholder="-4.5" value="${gl.spread||""}"></label>
+      </div></div>
+    ${injBlock(a,h)}
+    <div class="teams">${teamTable(a,selGame,false)}${teamTable(h,selGame,true)}</div>
+  </div>`;
+}
+const toAm=p=>p>=0.5?-Math.round(100*p/(1-p)):Math.round(100*(1-p)/p);
+function strongAt(p){const w=(1.07-p)/p;return w>=1?Math.round(100*w):-Math.round(100/w)}
+function rungs(prop){
+  const pr=project({...prop,line:0}); if(!pr) return [];
+  let lo=Math.max(1,Math.floor(pr.mu-1.6*pr.sd)), hi=Math.max(lo+3,Math.ceil(pr.mu+1.1*pr.sd));
+  if(hi-lo+1>12){lo=Math.max(1,Math.round(pr.mu-7));hi=lo+11}
+  const out=[];for(let n=lo;n<=hi;n++) out.push(n);
+  return {list:out,mu:pr.mu};
+}
+function rungVerdict(prop,n,odds){
+  if(odds==null||odds===""||isNaN(odds)) return `<span class="stale">—</span>`;
+  if(Math.abs(odds)<100) return `<span class="err">Use odds like -175</span>`;
+  const r=evaluate({...prop,line:n-0.5,over:Number(odds),under:null});
+  return `<span class="chip ${r.tier}">${{check:"Check first",strong:"Strong",lean:"Lean",pass:"Pass"}[r.tier]}</span> <span class="num evn">${r.ev>=0?"+":""}${(r.ev*100).toFixed(1)}%</span> <button class="btn sm" type="button" data-ladd="${n}">Add</button>`;
+}
+function ladderHTML(prop){
+  const R=rungs(prop); if(!R.list) return "";
+  const saved=((draft[openRow]||{}).ladder||{})[prop.stat]||{};
+  const rows=R.list.map(n=>{
+    const r=evaluate({...prop,line:n-0.5,over:-110,under:null}); const p=r.prob;
+    const near=Math.round(R.mu)===n;
+    return `<tr class="${near?"near":""}"><td><b class="num">${n}+</b>${near?' <span class="stale pj">≈ proj</span>':""}</td>
+      <td class="num">${pct(p)}</td><td class="num fp">${fmtOdds(toAm(Math.min(Math.max(p,0.005),0.995)))}</td>
+      <td class="num tgt">${p>0.985?"—":fmtOdds(strongAt(p))}</td>
+      <td><input id="lr-${n}" data-lr="${n}" type="number" inputmode="numeric" placeholder="odds" value="${saved[n]??""}" aria-label="Book odds for ${n} or more"></td>
+      <td id="lv-${n}">${rungVerdict(prop,n,saved[n])}</td></tr>`;
+  }).join("");
+  return `<h5>${STAT_LABEL[prop.stat]} ladder</h5>
+    ${!prop.spread?`<p class="warnline">No spread entered for this game, so blowout risk isn't counted in these chances.</p>`:""}
+    <p>"${R.list[2]||R.list[0]}+" means ${R.list[2]||R.list[0]} or more. <b>Strong at</b> is the worst price you should take for a Strong bet: that number or better (like -150 instead of -200). Type the book's price on any rung to check it.</p>
+    <div class="tw"><table><thead><tr><th>Rung</th><th>Chance</th><th class="fp">Fair price</th><th>Strong<span class="fp"> at</span></th><th>Book price</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function injBlock(a,h){
+  const col=t=>{const uo=items.filter(i=>i.kind==="out"&&i.game===selGame).map(i=>i.player).filter(n=>(P.get(n)||{}).team===t||items.some(i=>i.kind==="extra"&&i.game===selGame&&i.player===n&&i.team===t));
+    const l=[...uo.map(n=>{const o=items.find(i=>i.kind==="out"&&i.game===selGame&&i.player===n);const r=o&&replOf(o,selGame);return [n,"Out",r?`marked by you → ${r} steps in`:"marked by you"]}),...(INJ[t]||[]).filter(x=>!uo.includes(x[0]))].sort((x,y)=>(injClass(x[1])==="out"?0:1)-(injClass(y[1])==="out"?0:1));
+    return `<div><h4>${esc(TEAMS[t])}</h4>${l.length?`<ul>${l.map(([n,s,w])=>`<li><span class="ib ${injClass(s)}">${injShort(s)}</span>${esc(n)} <span class="stale">· ${esc(w)}</span>${AUTO_OUT.has(n)?` <span class="ib new">New</span><span class="stale"> → ${esc(replOf({player:n},selGame)||"teammates")} steps in</span>`:""}</li>`).join("")}</ul>`:`<span class="none">No injuries listed</span>`}</div>`};
+  return `<section class="inj" aria-label="Injury report">${col(a)}${col(h)}<div class="note2">${LIVE?`Live injury report · updated ${esc(fmtTime(LIVE.updated))}. The page checks again every 2 minutes. <button class="btn sm ghost" type="button" data-injrefresh="1">Refresh now</button>`:`Injury report as of ${esc(DATA.injAsOf||"")}. Statuses change up to tip-off, so check the book's app before you bet.`}</div></section>`;
+}
+function refreshLive(){
+  if(!openRow) return; const [key,name]=openRow.split("#"); const p=P.get(name); if(!p) return;
+  const isHome=key.split("|")[2]===p.team || (items.find(i=>i.kind==="extra"&&i.game===key&&i.player===name)||{}).team===key.split("|")[2];
+  const prop=currentProp(p,key,isHome);
+  const el=$("#live"); if(el) el.innerHTML=liveHTML(prop);
+  if(arguments[0]==="ladder"){const l=$("#ladder"); if(l) l.innerHTML=ladderHTML(prop)}
+  if(typeof arguments[0]==="number"){const c=$("#lv-"+arguments[0]); const v=(((draft[openRow]||{}).ladder||{})[prop.stat]||{})[arguments[0]]; if(c) c.innerHTML=rungVerdict(prop,arguments[0],v)}
+}
+function openCtx(){
+  if(!openRow) return null; const [key,name]=openRow.split("#"); const p=P.get(name); if(!p) return null;
+  const home=key.split("|")[2];
+  const isHome=p.team===home||(items.find(i=>i.kind==="extra"&&i.game===key&&i.player===name)||{}).team===home;
+  return {key,name,p,prop:currentProp(p,key,isHome)};
+}
+
+/* board + log */
+function ticket(prop){
+  const r=evaluate(prop); if(!r) return "";
+  const lo=Math.min(prop.line,r.mu)-Math.max(3,r.sd*0.8), hi=Math.max(prop.line,r.mu)+Math.max(3,r.sd*0.8);
+  const pos=x=>((x-lo)/(hi-lo)*100).toFixed(1);
+  const g=prop.game?prop.game.split("|"):null;
+  const extras=[g?`${g[1]} @ ${g[2]}`:"",prop.book,prop.total?`total ${prop.total}`:"",prop.spread?`spread ${prop.spread>0?"+":""}${prop.spread}`:"no spread",prop.min?`${prop.min} min set`:""].filter(Boolean).join(" · ");
+  const logged=items.some(t=>t.kind==="trade"&&t.propId===prop.id);
+  return `<article class="tick">
+    <div class="who"><div class="name">${esc(prop.player)}</div><div class="prop">${STAT_LABEL[prop.stat]} ${prop.line}</div>
+      <div class="meta">O ${fmtOdds(prop.over)}${prop.under==null?" · over only":" / U "+fmtOdds(prop.under)} · ${esc(extras)}</div></div>
+    <div class="verdict"><span class="chip ${r.tier}">${{check:"Check first",strong:"Strong",lean:"Lean",pass:"Pass"}[r.tier]}: ${r.side}</span>
+      <div class="ev">EV <b class="num">${r.ev>=0?"+":""}${(r.ev*100).toFixed(1)}%</b></div>
+      <div class="ev">Model <b class="num">${pct(r.prob)}</b> · book <span class="num">${pct(r.fair)}</span></div></div>
+    <div class="bar"><div class="track"></div>
+      <div class="mk line" style="left:${pos(prop.line)}%"><span class="num">Line ${prop.line}</span><i></i></div>
+      <div class="mk proj" style="left:${pos(r.mu)}%"><i></i><span class="num">Proj ${r.mu.toFixed(1)}</span></div></div>
+    <div class="acts"><span class="grow num">${r.mins.toFixed(1)} min · ±${r.sd.toFixed(1)} typical swing</span>
+      <button class="btn sm" data-log="${prop.id}" type="button" ${logged?"disabled":""}>${logged?"Logged":"Log paper trade"}</button>
+      <button class="btn sm ghost" data-del="${prop.id}" type="button">Remove</button></div></article>`;
+}
+function renderBoard(){
+  const props=items.filter(i=>i.kind==="prop");
+  const b=$("#nprops"); b.hidden=!props.length; b.textContent=props.length;
+  $("#clear-board").hidden=!props.length;
+  $("#board").innerHTML = mode==="loading"&&!props.length ? `<div class="empty">Loading your props…</div>`
+    : !props.length ? `<div class="empty"><b>No props yet.</b> Go to Games, tap a game, then tap a player to add his line.</div>`
+    : props.map(p=>({p,r:evaluate(p)})).filter(x=>x.r).sort((a,b)=>b.r.ev-a.r.ev).map(x=>ticket(x.p)).join("");
+  if(mode==="local") $("#board").insertAdjacentHTML("beforeend",`<p class="note">Saving on this device only. Open this page signed in to claude.ai to keep props and trades across devices.</p>`);
+}
+function grade(t){if(t.actual==null||t.actual===""||isNaN(t.actual))return null;const a=+t.actual;if(a===t.line)return "push";return (t.side==="Over")===(a>t.line)?"win":"loss"}
+function tProb(t){return t.prob!=null?t.prob:(t.ev+1)/(profit(t.odds)+1)}
+function tBook(t){return t.fair!=null&&t.fair>0?t.fair:implied(t.odds)}
+function lossWhy(t){
+  if(grade(t)!=="loss") return "";
+  const b=[], exp=t.mins||null;
+  if(t.amin!=null&&exp&&t.amin<exp-5) b.push(`only ${t.amin} min (expected ${Math.round(exp)})`);
+  else if(t.amin!=null&&!exp&&t.amin<26) b.push(`only ${t.amin} min`);
+  else if(t.amin!=null) b.push("got his minutes, cold night");
+  if(t.ev>=0.2) b.push("edge too big to trust");
+  if(t.odds>0&&tBook(t)<0.4) b.push("long shot per the book");
+  return b.join(" · ");
+}
+function pbin(ps){let d=[1];ps.forEach(p=>{const n=new Array(d.length+1).fill(0);d.forEach((v,i)=>{n[i]+=v*(1-p);n[i+1]+=v*p});d=n});return d}
+function summarize(list){let w=0,l=0,u=0,em=0,eb=0;list.forEach(t=>{const g=grade(t);if(g!=="win"&&g!=="loss")return;if(g==="win"){w++;u+=profit(t.odds)}else{l++;u-=1}em+=tProb(t);eb+=tBook(t)});return{w,l,n:w+l,u,em,eb}}
+function renderLog(){
+  const trades=items.filter(i=>i.kind==="trade").sort((a,b)=>(b.created||0)-(a.created||0));
+  $("#logrows").innerHTML=!trades.length?`<tr><td colspan="10" style="color:var(--muted)">No paper trades yet. On My props, tap <b>Log paper trade</b> on a pick you'd bet.</td></tr>`:
+    trades.map(t=>{const g=grade(t),why=lossWhy(t);
+      const res=g?`<span class="res-${g}">${g==="win"?"Win +"+profit(t.odds).toFixed(2)+"u":g==="loss"?"Loss −1.00u":"Push"}</span>`:`<span style="color:var(--muted)">Pending</span>`;
+      return `<tr><td class="num">${esc(t.date)}</td><td><b>${esc(t.player)}</b><br>${t.side} ${t.line} ${STAT_LABEL[t.stat]}${why?`<div class="why">${esc(why)}</div>`:""}</td><td class="num">${fmtOdds(t.odds)}</td><td class="num">${t.proj.toFixed(1)}</td>
+        <td class="num">${pct(tProb(t))}<br><span class="stale">book ${pct(tBook(t))}</span></td>
+        <td><span class="chip ${t.tier}">${t.tier}</span></td><td><input id="act-${t.id}" type="number" step="1" inputmode="numeric" data-act="${t.id}" value="${t.actual??""}" aria-label="Actual result"></td>
+        <td><input id="amin-${t.id}" type="number" step="1" inputmode="numeric" data-amin="${t.id}" value="${t.amin??""}" placeholder="min" aria-label="Minutes played"></td>
+        <td>${res}</td><td><button class="btn sm ghost" data-del="${t.id}" type="button">Delete</button></td></tr>`}).join("");
+  const graded=trades.filter(t=>{const g=grade(t);return g==="win"||g==="loss"});
+  const all=summarize(trades);
+  $("#sumtiles").innerHTML=[["Record",`${all.w}-${all.l}`],["Units",`${all.u>=0?"+":""}${all.u.toFixed(2)}`],["ROI",all.n?`${all.u>=0?"+":""}${(all.u/all.n*100).toFixed(1)}%`:"—"],["Pending",String(trades.filter(t=>!grade(t)).length)]]
+    .map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v num">${v}</div></div>`).join("");
+  const cal=$("#calib");
+  if(!graded.length){cal.innerHTML=`<div class="note"><b>Model check</b> · Enter the actual numbers for a few picks and this shows whether the model's chances are holding up.</div>`}
+  else{
+    const dm=pbin(graded.map(tProb)),db=pbin(graded.map(tBook));
+    const low=d=>d.slice(0,all.w+1).reduce((s,v)=>s+v,0);
+    const lm=low(dm),lb=low(db);
+    const oneIn=p=>p>0.5?"most nights":`about 1 in ${Math.max(2,Math.round(1/p))}`;
+    const over=all.em-all.eb;
+    cal.innerHTML=`<section class="calib">
+      <h2>Model check</h2>
+      <div class="stats"><div class="stat"><div class="k">Actual wins</div><div class="v num">${all.w} of ${all.n}</div></div>
+        <div class="stat"><div class="k">Model expected</div><div class="v num">${all.em.toFixed(1)}</div></div>
+        <div class="stat"><div class="k">Book expected</div><div class="v num">${all.eb.toFixed(1)}</div></div></div>
+      <p>The model expected about <b>${all.em.toFixed(1)}</b> wins and the book's odds about <b>${all.eb.toFixed(1)}</b>. You got <b>${all.w}</b>.
+      ${all.w<all.em?`A result this bad or worse happens ${oneIn(lm)} if the model is right, and ${oneIn(lb)} by the book's own odds.`:`That's at or above what the model expected.`}</p>
+      ${over>0.5&&all.w<all.em?`<p class="warnline">The model has been more confident than the book by ${over.toFixed(1)} wins. If that gap keeps losing, the model is overrating picks, not the book underrating them.</p>`:""}
+      ${all.n<30?`<p class="stale">${all.n} graded pick${all.n>1?"s":""} is too few to judge. Around 30 or more starts to mean something.</p>`:""}
+    </section>`;
+  }
+  const groups=[
+    ["Check first",t=>t.tier==="check"],["Strong",t=>t.tier==="strong"],["Lean",t=>t.tier==="lean"],["Pass",t=>t.tier==="pass"],
+    ["Favorites (−)",t=>t.odds<0],["Plus money (+)",t=>t.odds>0],
+    ["Edge 3–10%",t=>t.ev<0.10],["Edge 10–20%",t=>t.ev>=0.10&&t.ev<0.20],["Edge 20%+",t=>t.ev>=0.20],
+    ["Points",t=>t.stat==="PTS"],["Other stats",t=>t.stat!=="PTS"]];
+  const rows=groups.map(([lab,f])=>{const s=summarize(trades.filter(f));if(!s.n)return "";
+    return `<tr><td>${lab}</td><td class="num">${s.w}-${s.l}</td><td class="num ${s.u>=0?"res-win":"res-loss"}">${s.u>=0?"+":""}${s.u.toFixed(2)}u</td><td class="num">${s.em.toFixed(1)}</td><td class="num">${s.eb.toFixed(1)}</td></tr>`}).join("");
+  $("#tiertiles").innerHTML=rows?`<div class="logtw brk"><table><thead><tr><th>Breakdown</th><th>Record</th><th>Units</th><th>Model exp. wins</th><th>Book exp. wins</th></tr></thead><tbody>${rows}</tbody></table></div>`:"";
+}
+function renderBackupCount(){const c=k=>items.filter(i=>i.kind===k).length;const el=$("#bk-count");if(el)el.textContent=`${c("prop")} props, ${c("trade")} paper trades saved ${mode==="synced"?"to your account":"on this device"}`}
+async function downloadBackup(){
+  const data=JSON.stringify({app:"nba-prop-desk",version:1,saved:new Date().toISOString(),items},null,1);
+  const name=`prop-desk-backup-${todayStr()}.json`;
+  let dl=null; try{if(window.claude&&window.claude.use) dl=await claude.use("downloads")}catch(e){}
+  if(dl){try{await dl.save({filename:name,data});toast("Backup saved")}catch(e){if(e&&e.code==="declined")return;toast("Couldn't save the backup here. Try again in a moment.")}return}
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast("Backup downloaded")}catch(e){toast("Couldn't create the backup file.")}
+}
+let pendingRestore=null;
+function readBackup(file){
+  const box=$("#bk-confirm");
+  const r=new FileReader();
+  r.onload=()=>{let obj;try{obj=JSON.parse(r.result)}catch(e){obj=null}
+    const list=obj&&Array.isArray(obj.items)?obj.items.filter(i=>i&&typeof i.id==="string"&&["prop","trade","out","extra"].includes(i.kind)):null;
+    if(!list){box.innerHTML=`<span class="err">That file isn't a Prop Desk backup. Pick the file that starts with prop-desk-backup.</span>`;box.hidden=false;return}
+    const have=new Set(items.map(i=>i.id)); const add=list.filter(i=>!have.has(i.id));
+    const c=k=>add.filter(i=>i.kind===k).length;
+    if(!add.length){box.innerHTML=`Everything in this backup is already here.`;box.hidden=false;pendingRestore=null;return}
+    pendingRestore=add;
+    box.innerHTML=`Found <b>${c("prop")} props</b> and <b>${c("trade")} paper trades</b> that aren't here yet${list.length-add.length?` (${list.length-add.length} already here stay as they are)`:""}. <button class="btn sm primary" type="button" id="bk-yes">Restore</button> <button class="btn sm ghost" type="button" id="bk-no">Cancel</button>`;box.hidden=false};
+  r.onerror=()=>{box.innerHTML=`<span class="err">Couldn't read that file. Try picking it again.</span>`;box.hidden=false};
+  r.readAsText(file);
+}
+function renderAll(){renderDates();renderGames();renderDetail();renderBoard();renderLog();renderBackupCount();const a=alertsHTML();document.querySelectorAll(".alerts-slot").forEach(el=>el.innerHTML=a);const ia=document.getElementById("injasof");if(ia)ia.textContent=LIVE?`live · ${fmtTime(LIVE.updated)}`:`as of ${DATA.injAsOf||""}`}
+
+document.body.insertAdjacentHTML("beforeend",`<datalist id="allplayers">${[...P.keys()].sort().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`);
+
+/* events */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button,tr.pl"); if(!b) return;
+  if(b.dataset.v){document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));["games","board","log","how"].forEach(v=>$("#v-"+v).hidden=v!==b.dataset.v);return}
+  if(b.dataset.date){selDate=b.dataset.date;selGame=null;openRow=null;renderDates();renderGames();renderDetail();return}
+  if(b.dataset.game){selGame=selGame===b.dataset.game?null:b.dataset.game;openRow=null;renderGames();renderDetail();if(selGame)$("#gd").scrollIntoView({behavior:"smooth",block:"start"});return}
+  if(b.dataset.row){openRow=openRow===b.dataset.row?null:b.dataset.row;renderDetail();if(openRow){const i=$("#s-line");if(i)i.focus({preventScroll:true})}return}
+  if(b.dataset.other){
+    const inp=$("#other-"+b.dataset.other),n=inp.value.trim();
+    if(!P.has(n)){toast("Pick a name from the list");return}
+    if(items.some(i=>i.kind==="extra"&&i.game===selGame&&i.player===n)){openRow=selGame+"#"+n;renderDetail();return}
+    openRow=selGame+"#"+n;
+    putItem({id:"x"+Date.now().toString(36),kind:"extra",game:selGame,team:b.dataset.other,player:n}); return;
+  }
+  if(b.dataset.add){
+    const [key,name]=b.dataset.add.split("#"),p=P.get(name);
+    const isHome=key.split("|")[2]===p.team||(items.find(i=>i.kind==="extra"&&i.game===key&&i.player===name)||{}).team===key.split("|")[2];
+    const prop=currentProp(p,key,isHome);
+    if(prop.line==null||prop.line===""||isNaN(prop.line)){toast("Type the line first");return}
+    if(!(Math.abs(prop.over)>=100&&(prop.under==null||Math.abs(prop.under)>=100))){toast("Odds need to look like -110 or +120");return}
+    putItem({...prop,line:Number(prop.line),over:Number(prop.over),under:prop.under==null?null:Number(prop.under),id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),kind:"prop",game:key,date:key.split("|")[0],created:Date.now()});
+    delete draft[openRow]; openRow=null; renderDetail(); toast(`Added ${name} to My props`); return;
+  }
+  if(b.id==="bk-dl"){downloadBackup();return}
+  if(b.id==="inj-seen"){saveSeen();INJ_CHANGES=[];renderAll();return}
+  if(b.dataset.injrefresh){loadLiveInjuries(true);return}
+  if(b.id==="bk-no"){pendingRestore=null;$("#bk-confirm").hidden=true;$("#bk-file").value="";return}
+  if(b.id==="bk-yes"&&pendingRestore){const add=pendingRestore;pendingRestore=null;$("#bk-confirm").hidden=true;$("#bk-file").value="";(async()=>{for(const it of add) await putItem(it);toast(`Restored ${add.length} items`)})();return}
+  if(b.dataset.delextra){const ex=items.find(i=>i.id===b.dataset.delextra);openRow=null;delItem(b.dataset.delextra);if(ex)toast(`Removed ${ex.player} from the list`);return}
+  if(b.dataset.markout){const [key,name]=b.dataset.markout.split("#");const ex=items.find(i=>i.kind==="out"&&i.game===key&&i.player===name);
+    openRow=null; if(ex){delItem(ex.id);toast(`${name} is back in`)} else {putItem({id:"o"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),kind:"out",game:key,player:name});toast(`${name} marked out. ${autoRepl(name,key)||"His teammates"} picks up most of his minutes.`)} return;}
+  if(b.dataset.ladd){
+    const c=openCtx(); if(!c) return; const n=Number(b.dataset.ladd);
+    const odds=((((draft[openRow]||{}).ladder||{})[c.prop.stat])||{})[n];
+    if(odds==null||isNaN(odds)||Math.abs(odds)<100){toast("Type the book's price for that rung first");return}
+    putItem({...c.prop,line:n-0.5,over:Number(odds),under:null,id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),kind:"prop",game:c.key,date:c.key.split("|")[0],created:Date.now()});
+    toast(`Added ${c.name} ${n}+ ${STAT_LABEL[c.prop.stat]} to My props`); return;
+  }
+  if(b.dataset.log){const prop=items.find(i=>i.id===b.dataset.log),r=prop&&evaluate(prop);if(!r)return;
+    putItem({id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),kind:"trade",created:Date.now(),date:prop.date,propId:prop.id,player:prop.player,stat:prop.stat,line:prop.line,side:r.side,odds:r.odds,proj:r.mu,ev:r.ev,prob:r.prob,fair:r.fair,mins:r.mins,tier:r.tier,book:prop.book,actual:null});
+    toast("Logged as a 1-unit paper trade");return}
+  if(b.dataset.del){delItem(b.dataset.del);return}
+  if(b.id==="clear-board"){$("#confirm-clear").hidden=false;return}
+  if(b.id==="clear-no"){$("#confirm-clear").hidden=true;return}
+  if(b.id==="clear-yes"){$("#confirm-clear").hidden=true;items.filter(i=>i.kind==="prop").forEach(p=>delItem(p.id));return}
+});
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr.pl")){e.preventDefault();e.target.click()}});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.f&&openRow){(draft[openRow]=draft[openRow]||{})[t.dataset.f]= t.tagName==="SELECT"?t.value:(t.value===""?null:Number(t.value)); refreshLive(t.dataset.f==="stat"||t.dataset.f==="min"?"ladder":null)}
+  if(t.dataset.g&&selGame){(gameLines[selGame]=gameLines[selGame]||{})[t.dataset.g]=t.value===""?0:Number(t.value); refreshLive("ladder")}
+  if(t.dataset.lr&&openRow){const c=openCtx(); if(!c) return; const d=(draft[openRow]=draft[openRow]||{}); d.ladder=d.ladder||{}; const s=d.ladder[c.prop.stat]=d.ladder[c.prop.stat]||{};
+    s[t.dataset.lr]=t.value===""?null:Number(t.value); refreshLive(Number(t.dataset.lr))}
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="bk-file"&&e.target.files&&e.target.files[0]){readBackup(e.target.files[0]);return}
+  if(e.target.dataset&&e.target.dataset.repl&&e.target.dataset.repl.startsWith("new:")&&openRow){putItem({id:"o"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),kind:"out",game:openRow.split("#")[0],player:e.target.dataset.repl.slice(4),replacement:e.target.value||null});toast("Replacement updated");return}
+  if(e.target.dataset&&e.target.dataset.repl){const o=items.find(i=>i.id===e.target.dataset.repl); if(o){putItem({...o,replacement:e.target.value||null});toast(e.target.value==="__spread"?"His minutes spread across the team":"Replacement updated")} return}
+  const mid=e.target.dataset&&e.target.dataset.amin; if(mid){const tr=items.find(i=>i.id===mid); if(tr){const v=e.target.value.trim(); putItem({...tr,amin:v===""?null:Number(v)})} return}
+  const id=e.target.dataset&&e.target.dataset.act; if(!id) return;
+  const tr=items.find(i=>i.id===id); if(!tr) return;
+  const v=e.target.value.trim(); putItem({...tr,actual:v===""?null:Number(v)});
+});
+
+renderAll();
+initStore();
+loadLiveInjuries(false);
+setInterval(()=>{if(!document.hidden)loadLiveInjuries(false)},120000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadLiveInjuries(false)});
+</script>
+</body></html>
