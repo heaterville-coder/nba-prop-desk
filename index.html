@@ -193,6 +193,7 @@ label.btn{display:inline-block;text-transform:none;letter-spacing:0;font:600 14p
 .ib.p{background:var(--good-bg);color:var(--good)}
 .ib.new{background:var(--violet);color:#fff}
 .alerts{display:grid;gap:8px;margin-bottom:14px}
+.gmeta{font-size:12px;color:var(--muted)}
 .al{border-radius:14px;padding:10px 12px;font-size:14px;border:1px solid var(--line);background:var(--panel)}
 .al.bad{border-color:var(--bad);box-shadow:inset 3px 0 0 var(--bad)}
 .al.warn{border-color:var(--warn);box-shadow:inset 3px 0 0 var(--warn)}
@@ -217,7 +218,7 @@ tr.pl.isout td{opacity:.55}
 <div class="wrap">
 <header>
   <h1>NBA Prop <span>Desk</span></h1>
-  <div class="asof">Stats through <b>Nov 5, 2026</b> · injuries <b id="injasof">as of Nov 6</b> · this season only</div>
+  <div class="asof">Season stats <b id="statasof">opening night through Nov 5</b> · injuries <b id="injasof">as of Nov 6</b> · this season only</div>
 </header>
 <nav role="tablist">
   <button role="tab" aria-selected="true" data-v="games">Games</button>
@@ -282,6 +283,7 @@ tr.pl.isout td{opacity:.55}
     <li>If a player isn't on the book's prop board, he's probably not playing. Tap him and hit <b>Mark out</b>. One teammate steps into his spot and gets up to 12 of his minutes; the desk picks the bench player at the same position, and you can change it under <b>Who takes his spot?</b> The rest of his minutes are spread thin across the team. Players getting extra minutes show a green <b>+min</b> tag. Tap <b>Undo out</b> to reverse it.</li>
     <li>For a bigger role change than that, type the minutes into the player's Minutes box.</li>
     <li>On the live version, the injury list updates on its own every 2 minutes while the page is open, and again whenever you come back to it.</li>
+    <li>Season stats and the schedule (with each game's spread, total and tip time) also update on their own on the live version, about every 30 minutes. If the live stats ever look incomplete, the page keeps the saved ones instead.</li>
     <li>When a player is newly ruled <b>Out</b>, the desk treats him like you marked him out: his replacement and teammates get his minutes, and their projections update automatically. He gets a purple <b>New</b> tag.</li>
     <li>Alerts at the top tell you when a player on one of your saved props is ruled out or questionable, or when a teammate's absence changes his rating.</li>
   </ul>
@@ -483,12 +485,50 @@ const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MON=["Jan","Feb","Mar","Ap
 const dlabel=s=>{const [y,m,d]=s.split("-").map(Number);const dt=new Date(y,m-1,d);return {dow:DOW[dt.getDay()],md:MON[m-1]+" "+d}};
 
 /* view state */
-const DATES=Object.keys(DATA.sched);
+let DATES=Object.keys(DATA.sched).sort();
 const t0=todayStr();
 let selDate=DATES.find(d=>d>=t0)||DATES[DATES.length-1];
 let selGame=null, openRow=null;
 const gameKey=(d,a,h)=>d+"|"+a+"|"+h;
 const gameLines={};  /* key -> {total,spread(home)} kept in page memory; saved onto each prop */
+let LIVE_STATS=null, LIVE_SCHED=null; const GAMEINFO={};
+const eT=ab=>E2O[ab]||ab;
+const localYmd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+async function loadLiveStats(){
+  try{
+    const r=await fetch("/api/stats",{cache:"no-store"}); if(!r.ok) throw new Error("http");
+    const j=await r.json();
+    const rows=(j.players||[]).filter(x=>Array.isArray(x)&&x.length>=13&&TEAMS[eT(x[1])]&&x[3]>0&&x[5]!=null);
+    const full=rows.filter(x=>x[6]!=null&&x[9]!=null&&x[10]!=null&&x[11]!=null).length;
+    if(rows.length<150||full<rows.length*0.8) throw new Error("incomplete");
+    const seen=new Set();
+    rows.forEach(x=>{const name=ourName(x[0]), team=eT(x[1]), old=P.get(name); seen.add(name);
+      P.set(name,{name,team,pos:x[2]||(old&&old.pos)||"",GS:x[4],stale:false,cur:{G:x[3],MP:x[5],FGA:x[6],TPA:x[7],FTA:x[8],PTS:x[9],REB:x[10],AST:x[11],TPM:x[12]},pri:old?old.pri:null})});
+    P.forEach(v=>{if(v.cur&&!seen.has(v.name)) v.stale=true});
+    NAMEKEY=null; LIVE_STATS={updated:j.updated,count:rows.length}; return true;
+  }catch(e){return false}
+}
+async function loadLiveSchedule(){
+  try{
+    const r=await fetch("/api/schedule",{cache:"no-store"}); if(!r.ok) throw new Error("http");
+    const j=await r.json(); if(!Array.isArray(j.games)||!j.games.length) throw new Error("empty");
+    const byDate={};
+    j.games.forEach(g=>{const a=eT(g.away),h=eT(g.home); if(!TEAMS[a]||!TEAMS[h]) return;
+      const d=new Date(g.start); if(isNaN(d)) return; const ds=localYmd(d);
+      (byDate[ds]=byDate[ds]||[]).push([a,h]);
+      const key=gameKey(ds,a,h); GAMEINFO[key]={start:g.start,status:g.status};
+      const gl=gameLines[key]=gameLines[key]||{};
+      if(!gl.userTotal&&g.total!=null){gl.total=g.total;gl.autoTotal=true}
+      if(!gl.userSpread&&g.spreadHome!=null){gl.spread=g.spreadHome;gl.autoSpread=true}
+    });
+    Object.assign(DATA.sched,byDate);
+    DATES=Object.keys(DATA.sched).sort();
+    if(!DATA.sched[selDate]||selDate<todayStr()) selDate=DATES.find(d=>d>=todayStr())||selDate;
+    LIVE_SCHED={updated:j.updated}; return true;
+  }catch(e){return false}
+}
+async function loadLiveAll(){await Promise.all([loadLiveStats(),loadLiveSchedule()]);renderAll();loadLiveInjuries(false)}
+
 const draft={};      /* per open row: stat,line,over,under,book,min */
 
 function renderDates(){
@@ -504,7 +544,7 @@ function renderGames(){
     const k=gameKey(selDate,a,h),n=propsFor(k);
     return `<button type="button" class="game" data-game="${k}" aria-pressed="${selGame===k}">
       <span class="row">${badge(a)}<b>${esc(nick(a))}</b>${n?`<small class="pc">${n} prop${n>1?"s":""}</small>`:""}</span>
-      <span class="row">${badge(h)}<b>${esc(nick(h))}</b><small>home</small></span></button>`}).join("");
+      <span class="row">${badge(h)}<b>${esc(nick(h))}</b><small>home</small></span>${gameMeta(k,h)}</button>`}).join("");
 }
 function rosterRows(team,key,isHome){
   const isOut=p=>{const i=injOf(p.name,key);return !!(i&&/out/i.test(i.s))};
@@ -588,7 +628,7 @@ function renderDetail(){
       <div class="gl">
         <label for="g-total">Game total<input id="g-total" data-g="total" type="number" step="0.5" inputmode="decimal" placeholder="229.5" value="${gl.total||""}"></label>
         <label for="g-spread">${h} spread<input id="g-spread" data-g="spread" type="number" step="0.5" inputmode="decimal" placeholder="-4.5" value="${gl.spread||""}"></label>
-      </div></div>
+      </div>${(gl.autoSpread||gl.autoTotal)?`<div class="stale" style="font-size:12px">Spread and total filled in from the live lines. Type over them to use your book's numbers.</div>`:""}</div>
     ${injBlock(a,h)}
     <div class="teams">${teamTable(a,selGame,false)}${teamTable(h,selGame,true)}</div>
   </div>`;
@@ -756,7 +796,11 @@ function readBackup(file){
   r.onerror=()=>{box.innerHTML=`<span class="err">Couldn't read that file. Try picking it again.</span>`;box.hidden=false};
   r.readAsText(file);
 }
-function renderAll(){renderDates();renderGames();renderDetail();renderBoard();renderLog();renderBackupCount();const a=alertsHTML();document.querySelectorAll(".alerts-slot").forEach(el=>el.innerHTML=a);const ia=document.getElementById("injasof");if(ia)ia.textContent=LIVE?`live · ${fmtTime(LIVE.updated)}`:`as of ${DATA.injAsOf||""}`}
+function gameMeta(k,h){const gi=GAMEINFO[k],gl=gameLines[k]||{};const bits=[];
+  if(gi&&gi.start){const d=new Date(gi.start);if(!isNaN(d))bits.push(gi.status==="in"?"Live now":gi.status==="post"?"Final":d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))}
+  if(gl.spread) bits.push(`${h} ${gl.spread>0?"+":""}${gl.spread}`); if(gl.total) bits.push(`O/U ${gl.total}`);
+  return bits.length?`<span class="gmeta">${esc(bits.join(" · "))}</span>`:""}
+function renderAll(){renderDates();renderGames();renderDetail();renderBoard();renderLog();renderBackupCount();const a=alertsHTML();document.querySelectorAll(".alerts-slot").forEach(el=>el.innerHTML=a);const sa=document.getElementById("statasof");if(sa)sa.textContent=LIVE_STATS?`live · ${fmtTime(LIVE_STATS.updated)}`:"opening night through Nov 5";const ia=document.getElementById("injasof");if(ia)ia.textContent=LIVE?`live · ${fmtTime(LIVE.updated)}`:`as of ${DATA.injAsOf||""}`}
 
 document.body.insertAdjacentHTML("beforeend",`<datalist id="allplayers">${[...P.keys()].sort().map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`);
 
@@ -810,7 +854,7 @@ document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.tar
 document.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.f&&openRow){(draft[openRow]=draft[openRow]||{})[t.dataset.f]= t.tagName==="SELECT"?t.value:(t.value===""?null:Number(t.value)); refreshLive(t.dataset.f==="stat"||t.dataset.f==="min"?"ladder":null)}
-  if(t.dataset.g&&selGame){(gameLines[selGame]=gameLines[selGame]||{})[t.dataset.g]=t.value===""?0:Number(t.value); refreshLive("ladder")}
+  if(t.dataset.g&&selGame){const gl=(gameLines[selGame]=gameLines[selGame]||{});gl[t.dataset.g]=t.value===""?0:Number(t.value);gl[t.dataset.g==="total"?"userTotal":"userSpread"]=true;gl[t.dataset.g==="total"?"autoTotal":"autoSpread"]=false; refreshLive("ladder")}
   if(t.dataset.lr&&openRow){const c=openCtx(); if(!c) return; const d=(draft[openRow]=draft[openRow]||{}); d.ladder=d.ladder||{}; const s=d.ladder[c.prop.stat]=d.ladder[c.prop.stat]||{};
     s[t.dataset.lr]=t.value===""?null:Number(t.value); refreshLive(Number(t.dataset.lr))}
 });
@@ -826,7 +870,8 @@ document.addEventListener("change",e=>{
 
 renderAll();
 initStore();
-loadLiveInjuries(false);
+loadLiveAll();
+setInterval(()=>{if(!document.hidden)loadLiveAll()},1800000);
 setInterval(()=>{if(!document.hidden)loadLiveInjuries(false)},120000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)loadLiveInjuries(false)});
 </script>
