@@ -5,6 +5,7 @@ Player prop projections, ladders, target prices and paper-trade tracking for NBA
 - `index.html` — the whole app (one page).
 - `netlify/functions/injuries.mjs` — live NBA injury report at `/api/injuries`.
 - `netlify/functions/stats.mjs` — season-to-date per-game stats for every player at `/api/stats` (add `?debug=1` to see the raw source fields).
+- `netlify/functions/gamelog.mjs` — one player's game-by-game log at `/api/gamelog?id=ESPN_ID` (add `&season=2026` for last season, `&debug=1` for raw fields).
 - `netlify/functions/schedule.mjs` — next two weeks of games with tip time, spread and total at `/api/schedule`.
 - `netlify.toml` — tells Netlify to publish this folder and where the helper lives. No build step.
 

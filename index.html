@@ -210,6 +210,22 @@ tr.pl.cr .pn{color:#FFE48A}
 .crc{flex:0 0 auto;display:flex;align-items:center;gap:8px;font:inherit;color:inherit;text-align:left;background:linear-gradient(160deg,rgba(245,197,66,.14),var(--panel) 60%);border:1px solid rgba(245,197,66,.45);border-radius:14px;padding:8px 10px;cursor:pointer}
 .crc .crn{display:grid;gap:3px;font-size:13px;white-space:nowrap}
 .crc.isout{opacity:.5}
+.trends{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.trends h5{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.trn-empty,.trn-sub{margin:0;font-size:12px;color:var(--muted)}
+.tchart{width:100%;max-width:520px;height:auto;display:block}
+.tchart .tb-hit{fill:var(--good)} .tchart .tb-miss{fill:var(--bad)} .tchart .tb-push,.tchart .tb-n{fill:var(--muted)}
+.tchart .tv{fill:var(--ink);font:700 11px var(--body)} .tchart .tl{fill:var(--muted);font:600 9.5px var(--body)}
+.tchart .tline{stroke:var(--ink);stroke-dasharray:5 4;stroke-width:1.4;opacity:.8} .tchart .tlv{fill:var(--ink);font:700 11px var(--body)}
+.tchart .tbase{stroke:var(--line);stroke-width:1.5}
+.tnotes{margin:0;padding:0;list-style:none;display:grid;gap:5px;font-size:13px}
+.tnotes li{padding:6px 9px;border-radius:10px;background:var(--soft);border-left:3px solid var(--muted)}
+.tnotes li.up{border-left-color:var(--good)} .tnotes li.down{border-left-color:var(--bad)} .tnotes li.warn{border-left-color:var(--warn)}
+table.splits{font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;max-width:520px}
+table.splits th,table.splits td{text-align:right;padding:5px 8px} table.splits th:first-child,table.splits td:first-child{text-align:left;padding-left:10px}
+table.splits tr.now td{background:rgba(124,240,90,.08)} table.splits tr.old td{color:var(--muted)}
+.nowtag{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.trends .tw{max-width:min(calc(100vw - 44px),540px)}
 .gmeta{font-size:12px;color:var(--muted)}
 .al{border-radius:14px;padding:10px 12px;font-size:14px;border:1px solid var(--line);background:var(--panel)}
 .al.bad{border-color:var(--bad);box-shadow:inset 3px 0 0 var(--bad)}
@@ -297,6 +313,7 @@ tr.pl.isout td{opacity:.55}
   </ul>
   <h3>Injuries</h3>
   <ul>
+    <li><b>Trends</b> in the player panel: his last 10 games against the line (green over, red under), splits for home and away, back-to-backs, last 5 and vs tonight's opponent, plus written notes on anything that stands out. The row that matches tonight is highlighted. You can pull last season's games vs this opponent for reference; they never feed the projection.</li>
     <li>Gold coin players are <b>Coin Respectors</b>: the players your crew trusts day in and day out, with their trusted markets (Pts, Reb, Ast, 3s). Their trusted stats have a ★ in the Stat menu. Tap one in the Coin Respectors row to jump straight to his prop. The Model check tracks Coin Respector picks separately, so you can see if they really are more reliable.</li>
     <li>Each game lists who's out or questionable. Out players are greyed and moved to the bottom of the roster.</li>
     <li>If a player isn't on the book's prop board, he's probably not playing. Tap him and hit <b>Mark out</b>. One teammate steps into his spot and gets up to 12 of his minutes; the desk picks the bench player at the same position, and you can change it under <b>Who takes his spot?</b> The rest of his minutes are spread thin across the team. Players getting extra minutes show a green <b>+min</b> tag. Tap <b>Undo out</b> to reverse it.</li>
@@ -529,7 +546,7 @@ async function loadLiveStats(){
     if(rows.length<150||full<rows.length*0.8) throw new Error("incomplete");
     const seen=new Set();
     rows.forEach(x=>{const name=ourName(x[0]), team=eT(x[1]), old=P.get(name); seen.add(name);
-      P.set(name,{name,team,pos:x[2]||(old&&old.pos)||"",GS:x[4],stale:false,cur:{G:x[3],MP:x[5],FGA:x[6],TPA:x[7],FTA:x[8],PTS:x[9],REB:x[10],AST:x[11],TPM:x[12]},pri:old?old.pri:null})});
+      P.set(name,{name,team,pos:x[2]||(old&&old.pos)||"",GS:x[4],stale:false,espnId:x[13]||(old&&old.espnId)||null,cur:{G:x[3],MP:x[5],FGA:x[6],TPA:x[7],FTA:x[8],PTS:x[9],REB:x[10],AST:x[11],TPM:x[12]},pri:old?old.pri:null})});
     P.forEach(v=>{if(v.cur&&!seen.has(v.name)) v.stale=true});
     NAMEKEY=null; LIVE_STATS={updated:j.updated,count:rows.length}; return true;
   }catch(e){return false}
@@ -641,6 +658,7 @@ function slipHTML(p,key,isHome){
     ${(()=>{const ex=items.find(i=>i.kind==="extra"&&i.game===key&&i.player===p.name);return ex?`<button class="btn ghost" type="button" data-delextra="${ex.id}">Remove from list</button>`:""})()}
   </div>
   <div class="live" id="live">${liveHTML(prop)}</div>
+  <div class="trends" id="trends">${trendsHTML(p,prop)}</div>
   <div class="ladder" id="ladder">${ladderHTML(prop)}</div>
   <div class="prev">${p.cur?`This season: ${f1(p.cur.PTS)} pts · ${f1(p.cur.REB)} reb · ${f1(p.cur.AST)} ast · ${f1(p.cur.TPM)} 3pm · ${f1(p.cur.FGA)} shots in ${f1(p.cur.MP)} min over ${p.cur.G} games${p.cur.G<5?". Fewer than 5 games, so the desk uses a wider range.":""}`:"No games this season yet."}</div>`;
 }
@@ -702,6 +720,7 @@ function refreshLive(){
   const isHome=key.split("|")[2]===p.team || (items.find(i=>i.kind==="extra"&&i.game===key&&i.player===name)||{}).team===key.split("|")[2];
   const prop=currentProp(p,key,isHome);
   const el=$("#live"); if(el) el.innerHTML=liveHTML(prop);
+  if(typeof arguments[0]!=="number"){const tr=$("#trends"); if(tr) tr.innerHTML=trendsHTML(p,prop)}
   if(arguments[0]==="ladder"){const l=$("#ladder"); if(l) l.innerHTML=ladderHTML(prop)}
   if(typeof arguments[0]==="number"){const c=$("#lv-"+arguments[0]); const v=(((draft[openRow]||{}).ladder||{})[prop.stat]||{})[arguments[0]]; if(c) c.innerHTML=rungVerdict(prop,arguments[0],v)}
 }
@@ -823,6 +842,70 @@ function readBackup(file){
   r.onerror=()=>{box.innerHTML=`<span class="err">Couldn't read that file. Try picking it again.</span>`;box.hidden=false};
   r.readAsText(file);
 }
+const GL={};
+const O2E={BRK:"BKN",CHO:"CHA",GSW:"GS",NOP:"NO",NYK:"NY",PHO:"PHX",SAS:"SA",UTA:"UTAH",WAS:"WSH"};
+function fetchLog(id,season){const k=id+"|"+(season||"");if(GL[k])return;GL[k]={pending:true};
+  fetch(`/api/gamelog?id=${encodeURIComponent(id)}${season?`&season=${season}`:""}`,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject(new Error("http")))
+  .then(j=>{GL[k]={games:Array.isArray(j.games)?j.games:[]}}).catch(()=>{GL[k]={err:true}}).finally(refreshTrendsUI)}
+function refreshTrendsUI(){const c=openCtx();const el=$("#trends");if(c&&el)el.innerHTML=trendsHTML(c.p,c.prop)}
+const GK={PTS:"pts",REB:"reb",AST:"ast",TPM:"tpm"};
+function statOf(g,stat){let s=0;for(const k of STAT_PARTS[stat]){const v=g[GK[k]];if(v==null)return null;s+=v}return s}
+function prepGames(list,stat){const gs=(list||[]).filter(g=>g.min!=null&&g.min>0).map(g=>({...g,v:statOf(g,stat),d:new Date(g.date)})).filter(g=>g.v!=null&&!isNaN(g.d)).sort((a,b)=>a.d-b.d);
+  gs.forEach((g,i)=>{g.b2b=i>0&&(g.d-gs[i-1].d)<36*3600e3});return gs}
+function trendChart(last,L){
+  if(!last.length) return "";
+  const W=330,H=150,top=16,bot=40,left=6,right=24,max=Math.max(...last.map(g=>g.v),L||0,1)*1.15;
+  const y=v=>top+(H-top-bot)*(1-v/max), bw=(W-left-right)/last.length;
+  const bars=last.map((g,i)=>{const x=left+i*bw+bw*0.15,w=bw*0.7,yy=y(g.v),cls=L==null?"tb-n":g.v>L?"tb-hit":g.v===L?"tb-push":"tb-miss";
+    const md=(g.d.getMonth()+1)+"/"+g.d.getDate();
+    return `<rect class="${cls}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${(H-bot-yy).toFixed(1)}" rx="5"></rect>
+      <text class="tv" x="${(x+w/2).toFixed(1)}" y="${(yy-4).toFixed(1)}" text-anchor="middle">${g.v}</text>
+      <text class="tl" x="${(x+w/2).toFixed(1)}" y="${H-bot+14}" text-anchor="middle">${g.home===false?"@":""}${esc(eT(g.opp))}</text>
+      <text class="tl" x="${(x+w/2).toFixed(1)}" y="${H-bot+27}" text-anchor="middle">${md}</text>`}).join("");
+  const ly=L==null?"":`<line class="tline" x1="${left}" x2="${W-right+2}" y1="${y(L).toFixed(1)}" y2="${y(L).toFixed(1)}"></line><text class="tlv" x="${W-2}" y="${(y(L)+4).toFixed(1)}" text-anchor="end">${L}</text>`;
+  return `<svg class="tchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Last ${last.length} games compared with the line ${L}"><line class="tbase" x1="${left}" x2="${W-right+2}" y1="${H-bot}" y2="${H-bot}"></line>${bars}${ly}</svg>`;
+}
+function trendsHTML(p,prop){
+  const head=`<h5>Trends · ${STAT_LABEL[prop.stat]}</h5>`;
+  if(!p.espnId) return head+`<p class="trn-empty">Trends load from the live stats feed on the Netlify version.</p>`;
+  const c=GL[p.espnId+"|"];
+  if(!c){fetchLog(p.espnId);return head+`<p class="trn-empty">Loading his game log…</p>`}
+  if(c.pending) return head+`<p class="trn-empty">Loading his game log…</p>`;
+  if(c.err) return head+`<p class="trn-empty">His game log isn't available right now. Try again in a minute.</p>`;
+  const games=prepGames(c.games,prop.stat);
+  if(!games.length) return head+`<p class="trn-empty">No games logged for him yet this season.</p>`;
+  const pr=project({...prop,line:0});
+  const L=(prop.line!=null&&prop.line!==""&&!isNaN(prop.line))?Number(prop.line):(pr?Math.round(pr.mu)-0.5:null);
+  const [d,aT,hT]=prop.game.split("|"), opp=p.team===hT?aT:p.team===aT?hT:null, isHome=p.team===hT;
+  const yd=new Date(d+"T12:00:00");yd.setDate(yd.getDate()-1);
+  const tonightB2B=(DATA.sched[localYmd(yd)]||[]).some(x=>x.includes(p.team));
+  const avg=a=>a.length?a.reduce((s,g)=>s+g.v,0)/a.length:null, mavg=a=>a.length?a.reduce((s,g)=>s+g.min,0)/a.length:null;
+  const hits=a=>a.filter(g=>g.v>L).length;
+  const vs=opp?games.filter(g=>eT(g.opp)===opp):[];
+  const rows=[["Season",games,false],["Last 5",games.slice(-5),false],["Home",games.filter(g=>g.home===true),isHome],["Away",games.filter(g=>g.home===false),!isHome],["Back-to-back",games.filter(g=>g.b2b),tonightB2B],["Rested",games.filter(g=>!g.b2b),!tonightB2B],[opp?`vs ${opp}`:"vs opponent",vs,true]];
+  const prevKey=p.espnId+"|2026", prev=GL[prevKey];
+  if(prev&&prev.games&&opp){const pv=prepGames(prev.games,prop.stat).filter(g=>eT(g.opp)===opp); rows.push([`vs ${opp} last season`,pv,false,true])}
+  const sa=avg(games);
+  const tbl=`<div class="tw"><table class="splits"><thead><tr><th>Split</th><th>G</th><th>Avg</th><th>Min</th>${L!=null?`<th>Over ${L}</th>`:""}</tr></thead><tbody>${rows.map(([lab,a,now,old])=>`<tr class="${now?"now":""}${old?" old":""}"><td>${esc(lab)}${now&&lab!=="Season"?' <span class="nowtag">tonight</span>':""}</td><td class="num">${a.length}</td><td class="num">${a.length?avg(a).toFixed(1):"—"}</td><td class="num">${a.length?mavg(a).toFixed(1):"—"}</td>${L!=null?`<td class="num">${a.length?`${hits(a)}/${a.length}`:"—"}</td>`:""}</tr>`).join("")}</tbody></table></div>`;
+  const notes=[], lab=STAT_LABEL[prop.stat].toLowerCase(), thr=Math.max(prop.stat==="PTS"||prop.stat.length>2?1.5:0.8,(sa||0)*0.12);
+  const last10=games.slice(-10);
+  if(L!=null&&last10.length>=5){const h=hits(last10);if(h>=Math.ceil(last10.length*0.7))notes.push(["up",`Cleared ${L} in ${h} of his last ${last10.length}.`]);else if(h<=Math.floor(last10.length*0.3))notes.push(["down",`Cleared ${L} in only ${h} of his last ${last10.length}.`])}
+  if(L!=null){let k=0;const over=games[games.length-1].v>L;for(let i=games.length-1;i>=0&&((games[i].v>L)===over);i--)k++;if(k>=3)notes.push([over?"up":"down",`${over?"Over":"Under"} ${L} in ${k} straight games.`])}
+  const hm=games.filter(g=>g.home===true),aw=games.filter(g=>g.home===false);
+  if(hm.length>=2&&aw.length>=2){const df=avg(hm)-avg(aw);if(Math.abs(df)>=thr)notes.push([(df>0)===isHome?"up":"down",`Averages ${Math.abs(df).toFixed(1)} more ${lab} ${df>0?"at home":"on the road"} (${hm.length} home, ${aw.length} away). Tonight he's ${isHome?"home":"on the road"}.`])}
+  const bb=games.filter(g=>g.b2b),rs=games.filter(g=>!g.b2b);
+  if(bb.length>=2&&rs.length>=2){const df=avg(bb)-avg(rs);if(Math.abs(df)>=thr)notes.push([df>0?"up":"down",`${df>0?"Up":"Down"} ${Math.abs(df).toFixed(1)} ${lab} on the second night of back-to-backs (${bb.length} games).`])}
+  if(tonightB2B) notes.push(["warn","Tonight is the second night of a back-to-back for his team."]);
+  if(vs.length) notes.push([avg(vs)>=(sa||0)?"up":"down",`Played ${opp} ${vs.length} time${vs.length>1?"s":""} this season: ${vs.map(g=>g.v).join(", ")} ${lab}.`]);
+  const l5=games.slice(-5);
+  if(games.length>=7){const df=avg(l5)-sa;if(Math.abs(df)>=thr)notes.push([df>0?"up":"down",`Trending ${df>0?"up":"down"}: ${avg(l5).toFixed(1)} over his last 5 vs ${sa.toFixed(1)} on the season.`])
+    const dm=mavg(l5)-mavg(games);if(Math.abs(dm)>=3)notes.push([dm>0?"up":"down",`Minutes ${dm>0?"rising":"falling"}: ${mavg(l5).toFixed(1)} over his last 5 vs ${mavg(games).toFixed(1)} on the season.`])}
+  return head+`${L!=null?`<p class="trn-sub">Last ${last10.length} games vs ${prop.line!=null&&prop.line!==""?"your line":"a line near his projection"} of <b>${L}</b>. Green is over, red is under.</p>`:""}
+    ${trendChart(last10,L)}
+    ${notes.length?`<ul class="tnotes">${notes.map(([k,m])=>`<li class="${k}">${esc(m)}</li>`).join("")}</ul>`:`<p class="trn-sub">Nothing unusual stands out yet.</p>`}
+    ${tbl}
+    <p class="trn-sub">This season only. Splits with fewer than 3 games are a hint, not a rule.${opp&&!prev?` <button class="btn sm ghost" type="button" data-lastseason="${esc(p.espnId)}">Show last season vs ${opp}</button>`:prev&&prev.pending?" Loading last season…":""}</p>`;
+}
 function gameMeta(k,h){const gi=GAMEINFO[k],gl=gameLines[k]||{};const bits=[];
   if(gi&&gi.start){const d=new Date(gi.start);if(!isNaN(d))bits.push(gi.status==="in"?"Live now":gi.status==="post"?"Final":d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}))}
   if(gl.spread) bits.push(`${h} ${gl.spread>0?"+":""}${gl.spread}`); if(gl.total) bits.push(`O/U ${gl.total}`);
@@ -841,6 +924,7 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("button,tr.pl"); if(!b) return;
   if(b.dataset.v){document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));["games","board","log","how"].forEach(v=>$("#v-"+v).hidden=v!==b.dataset.v);return}
   if(b.dataset.date){selDate=b.dataset.date;selGame=null;openRow=null;renderDates();renderGames();renderDetail();return}
+  if(b.dataset.lastseason){fetchLog(b.dataset.lastseason,"2026");refreshTrendsUI();return}
   if(b.dataset.crgo){const [k,n]=b.dataset.crgo.split("#");selGame=k;openRow=b.dataset.crgo;renderGames();renderDetail();const r=document.querySelector(`tr.pl[data-row="${CSS.escape(b.dataset.crgo)}"]`);(r||$("#gd")).scrollIntoView({behavior:"smooth",block:"center"});return}
   if(b.dataset.game){selGame=selGame===b.dataset.game?null:b.dataset.game;openRow=null;renderGames();renderDetail();if(selGame)$("#gd").scrollIntoView({behavior:"smooth",block:"start"});return}
   if(b.dataset.row){openRow=openRow===b.dataset.row?null:b.dataset.row;renderDetail();if(openRow){const i=$("#s-line");if(i)i.focus({preventScroll:true})}return}

@@ -29,7 +29,7 @@ export function parse(json) {
     }
     const abbr = ath.teamShortName || ath.team?.abbreviation || ath.teams?.[0]?.abbreviation || "";
     if (!ath.displayName || !abbr || !pick.G || pick.MP == null) continue;
-    rows.push([ath.displayName, abbr, ath.position?.abbreviation || "", pick.G, pick.GS, pick.MP, pick.FGA, pick.TPA, pick.FTA, pick.PTS, pick.REB, pick.AST, pick.TPM]);
+    rows.push([ath.displayName, abbr, ath.position?.abbreviation || "", pick.G, pick.GS, pick.MP, pick.FGA, pick.TPA, pick.FTA, pick.PTS, pick.REB, pick.AST, pick.TPM, String(ath.id || "")]);
   }
   return { rows, pages: json?.pagination?.pages || 1, sampleKeys: Object.keys(names).length ? names : null };
 }
